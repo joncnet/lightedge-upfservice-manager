@@ -19,40 +19,173 @@
 
 import re
 import socket
+import time
+
+from iptc import Chain, Match, Rule, Table
 
 from upfservice.managers.upfmanager.uemaphandler import UEMapHandler
+from upfservice.managers.upfmanager.matchmaphandler import MatchMapHandler
 from upfservice.core.service import EService
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 7777
 DEFAULT_ELEMENT = "upfr"
+DEFAULT_UE_SUBNET = "10.0.0.0/8"
 
 
 class UPFManager(EService):
     """Service exposing the UPF function
 
     Parameters:
+        host: click upf host (optional, default: 127.0.0.1)
         port: upf console port (optional, default: 8888)
         element: upf element (optional, default: upfr)
+        ue_subnet: ue subnet (optional, default: 10.0.0.0/8)
     """
 
-    HANDLERS = [UEMapHandler]
+    HANDLERS = [UEMapHandler, MatchMapHandler]
 
     def __init__(self, context, service_id, port=DEFAULT_PORT,
-                 element=DEFAULT_ELEMENT):
+                 host=DEFAULT_HOST, element=DEFAULT_ELEMENT,
+                 ue_subnet=DEFAULT_UE_SUBNET):
 
         super().__init__(context=context, service_id=service_id, port=port,
-                         element=element)
+                         host=host, element=element, ue_subnet=ue_subnet)
+        self._init_click_upf()
+        self._init_netfilter()
+        self._prot_port_supp = {6: "tcp", 17: "udp", 132: "sctp"}
+
+    def _init_click_upf(self):
+
+        while True:
+            try:
+                self.read_handler("uemap")
+                break
+            except:
+                self.log.info("Waiting for Click UPF to start...")
+                time.sleep(5)
+
+    def _init_netfilter(self):
+
+        self.nat_table = Table(Table.NAT)
+        prerouting_chain = Chain(self.nat_table, "PREROUTING")
+
+        for rule in prerouting_chain.rules:
+            if rule.target.name == "UPF":
+                prerouting_chain.delete_rule(rule)
+
+        self.upf_chain = Chain(self.nat_table, "UPF")
+        if self.upf_chain in self.nat_table.chains:
+            self.upf_chain.flush()
+        else:
+            self.nat_table.create_chain(self.upf_chain)
+
+        self.nat_table.refresh()
+
+        upf_rule = Rule()
+        upf_rule.src = self.ue_subnet
+        upf_rule.create_target("UPF")
+        prerouting_chain.insert_rule(upf_rule)
+
+        self.nat_table.refresh()
 
     @property
     def uemap(self):
         """Return UE Map."""
 
-        uemap = self.read_handler("uemap")
+        status, response = self.read_handler("uemap")
 
-        print(uemap)
+        if status != 200:
+            raise Exception(response)
 
-        return []
+        return response
+
+    @property
+    def matchmap(self):
+        """Return matchmap."""
+
+        status, response = self.read_handler("matchmap")
+
+        if status != 200:
+            raise Exception(response)
+
+        return response
+
+    def add_matchmap(self, match_index, data):
+        """Set matchmap."""
+
+        if (data["dst_port"] != 0 or data["new_dst_port"] != 0) \
+                and data["ip_proto_num"] not in self._prot_port_supp:
+            raise ValueError("Matching protocol does not allow ports")
+
+        # return an ip address for both ip and hostname
+        if data["netmask"] == 32:
+            data["dst_ip"] = socket.gethostbyname(data["dst_ip"])
+        if data["new_dst_ip"]:
+            data["new_dst_ip"] = socket.gethostbyname(data["new_dst_ip"])
+
+        status, response = self.write_handler(
+            "matchmapinsert",
+            "%s %s-%s/%s-%s" % (match_index, data["ip_proto_num"],
+                                data["dst_ip"], data["netmask"],
+                                data["dst_port"]))
+
+        if data["new_dst_ip"]:
+            self._add_rewrite_rule(match_index, data)
+        else:
+            self._add_dummy_rule(match_index, data)
+
+        if status != 200:
+            raise Exception(response)
+
+    def _add_rewrite_rule(self, match_index, data):
+
+        rule = self._get_base_rule(data)
+
+        rule.create_target("DNAT")
+        rule.target.to_destination = data["new_dst_ip"]
+
+        if data["new_dst_port"] != 0:
+            rule.target.to_destination += ":%s" % data["new_dst_port"]
+
+        self.upf_chain.insert_rule(rule, match_index)
+        self.nat_table.refresh()
+
+    def _add_dummy_rule(self, match_index, data):
+
+        rule = self._get_base_rule(data)
+
+        rule.create_target("ACCEPT")
+
+        self.upf_chain.insert_rule(rule, match_index)
+        self.nat_table.refresh()
+
+    def _get_base_rule(self, data):
+
+        rule = Rule()
+        rule.protocol = data["ip_proto_num"]
+        rule.dst = "%s/%s" % (data["dst_ip"], data["netmask"])
+
+        if data["dst_port"] != 0:
+            match = Match(rule, self._prot_port_supp[data["ip_proto_num"]])
+            match.dport = str(data["dst_port"])
+            rule.add_match(match)
+
+        return rule
+
+    def del_matchmap(self, match_index):
+
+        if match_index != -1:
+            action = "matchmapdelete"
+            self.upf_chain.delete_rule(self.upf_chain.rules[match_index])
+        else:
+            action = "matchmapclear"
+            self.upf_chain.flush()
+
+        status, response = self.write_handler(action, match_index)
+
+        if status != 200:
+            raise Exception(response)
 
     @property
     def element(self):
@@ -84,11 +217,41 @@ class UPFManager(EService):
 
         self.params["port"] = int(value)
 
+    @property
+    def host(self):
+        """Return host."""
+
+        return self.params["host"]
+
+    @host.setter
+    def host(self, value):
+        """Set host."""
+
+        if "host" in self.params and self.params["host"]:
+            raise ValueError("Param host can not be changed")
+
+        self.params["host"] = value
+
+    @property
+    def ue_subnet(self):
+        """Return ue_subnet."""
+
+        return self.params["ue_subnet"]
+
+    @ue_subnet.setter
+    def ue_subnet(self, value):
+        """Set ue_subnet."""
+
+        if "ue_subnet" in self.params and self.params["ue_subnet"]:
+            raise ValueError("Param ue_subnet can not be changed")
+
+        self.params["ue_subnet"] = value
+
     def write_handler(self, handler, value):
         """Write to a click handler."""
 
         sock = socket.socket()
-        sock.connect((DEFAULT_HOST, self.port))
+        sock.connect((self.host, self.port))
 
         f_hand = sock.makefile()
         line = f_hand.readline()
@@ -116,7 +279,7 @@ class UPFManager(EService):
         """Read a click handler."""
 
         sock = socket.socket()
-        sock.connect((DEFAULT_HOST, self.port))
+        sock.connect((self.host, self.port))
 
         f_hand = sock.makefile()
         line = f_hand.readline()

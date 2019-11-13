@@ -24,22 +24,24 @@ import upfservice.managers.apimanager.apimanager as apimanager
 class UEMapHandler(apimanager.UPFServiceAPIHandler):
     """All the accounts defined in the controller."""
 
-    URLS = [r"/upf/v1/uemap/?"]
+    URLS = [r"/upf/v1/uemap/([0-9.]*)"]
 
-    @apimanager.validate()
-    def get(self):
+    @apimanager.validate(min_args=0, max_args=1)
+    def get(self, ue_ip=None):
         """List entries in the UE Map.
 
         Args:
 
-            [0]: the username
+            [0]: the UE Ip
 
         Example URLs:
 
             GET /upf/v1/uemap
+            GET /upf/v1/uemap/10.10.0.5
 
             ...
         """
-
-        return self.service.accounts \
-            if not args else self.service.accounts[args[0]]
+        if ue_ip:
+            return self.service.uemap[ue_ip]
+        else:
+            return self.service.uemap
