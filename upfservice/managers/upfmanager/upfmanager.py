@@ -51,9 +51,14 @@ class UPFManager(EService):
 
         super().__init__(context=context, service_id=service_id, port=port,
                          host=host, element=element, ue_subnet=ue_subnet)
+        self._prot_port_supp = {6: "tcp", 17: "udp", 132: "sctp"}
+
+    def start(self):
+
+        super().start()
+
         self._init_click_upf()
         self._init_netfilter()
-        self._prot_port_supp = {6: "tcp", 17: "udp", 132: "sctp"}
 
     def _init_click_upf(self):
 
