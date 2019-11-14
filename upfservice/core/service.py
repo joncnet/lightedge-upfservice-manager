@@ -23,7 +23,7 @@ import logging
 
 import tornado.ioloop
 
-from upfservice.core.serialize import serializable_dict
+from empower.core.serialize import serializable_dict
 
 
 @serializable_dict
@@ -222,8 +222,11 @@ class EService:
 
             name = package.__name__ + "." + module_name + "." + module_name
 
-            manifest['name'] = name
-            manifest['desc'] = module.__doc__
+            if 'name' not in manifest:
+                manifest['name'] = module_name
+
+            if 'desc' not in manifest:
+                manifest['desc'] = "No description available"
 
             results[name] = manifest
 
