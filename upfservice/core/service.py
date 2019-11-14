@@ -23,7 +23,7 @@ import logging
 
 import tornado.ioloop
 
-from empower.core.serialize import serializable_dict
+from upfservice.core.serialize import serializable_dict
 
 
 @serializable_dict
