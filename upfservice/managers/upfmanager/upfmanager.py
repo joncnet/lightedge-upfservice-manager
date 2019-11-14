@@ -174,6 +174,7 @@ class UPFManager(EService):
         return rule
 
     def del_matchmap(self, match_index):
+        """Delete a match rule."""
 
         if match_index != -1:
             action = "matchmapdelete"

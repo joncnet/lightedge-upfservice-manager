@@ -41,10 +41,11 @@ class MatchMapHandler(apimanager.UPFServiceAPIHandler):
 
             ...
         """
+
         if match_index:
             return self.service.matchmap[int(match_index) - 1]
-        else:
-            return self.service.matchmap
+
+        return self.service.matchmap
 
     @apimanager.validate(min_args=0, max_args=1)
     def post(self, match_index=1, **request_data):

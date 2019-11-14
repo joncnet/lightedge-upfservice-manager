@@ -41,7 +41,8 @@ class UEMapHandler(apimanager.UPFServiceAPIHandler):
 
             ...
         """
+
         if ue_ip:
             return self.service.uemap[ue_ip]
-        else:
-            return self.service.uemap
+
+        return self.service.uemap
