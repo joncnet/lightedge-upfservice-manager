@@ -18,7 +18,6 @@
 """API Manager (REST Northbound Interface)."""
 
 import json
-import os
 
 import tornado.web
 import tornado.httpserver
@@ -29,12 +28,9 @@ from pymodm.errors import ValidationError
 from upfservice.core.serialize import serialize
 from upfservice.core.service import EService
 
-DIRNAME = os.path.dirname(__file__)
-ROOT_PATH = os.path.normpath(os.path.join(DIRNAME, '..'))
-TEMPLATE_PATH = os.path.join(DIRNAME, 'templates')
-STATIC_PATH = os.path.join(DIRNAME, 'static')
 DEBUG = True
 DEFAULT_PORT = 8888
+DEFAULT_WEBUI = "/var/www/upfservice/"
 COOKIE_SECRET = b'xyRTvZpRSUyk8/9/McQAvsQPB4Rqv0w9mBtIpH9lf1o='
 
 
@@ -88,27 +84,30 @@ def validate(returncode=200, min_args=0, max_args=0):
     return decorator
 
 
+# pylint: disable=W0223
 class IndexHandler(tornado.web.RequestHandler):
     """Index page handler."""
 
     # service associated to this handler
     service = None
 
-    URLS = [r"/", r"/index.html"]
+    URLS = [r"/", r"/([a-z]*).html"]
 
     @tornado.web.authenticated
-    def get(self):
+    def get(self, args=None):
         """Render index page."""
 
-        username = self.get_secure_cookie("username").decode('UTF-8')
+        try:
 
-        account = self.service.accounts_manager.accounts[username]
+            page = "index.html" if not args else "%s.html" % args
 
-        self.render("index.html",
-                    username=username,
-                    password=account.password,
-                    name=account.name,
-                    email=account.email)
+            self.render(page)
+
+        except KeyError as ex:
+            self.send_error(404, message=str(ex))
+
+        except ValueError as ex:
+            self.send_error(400, message=str(ex))
 
 
 class UPFServiceAPIHandler(tornado.web.RequestHandler):
@@ -144,7 +143,7 @@ class UPFServiceAPIHandler(tornado.web.RequestHandler):
 class APIManager(EService):
     """Service exposing the UPF Service REST API
 
-    This service exposes the UPF Service REST API, the 'port' parameter
+    This service exposes the UPF Service API, the 'port' parameter
     specifies on which port the HTTP server should listen.
 
     Parameters:
@@ -154,20 +153,36 @@ class APIManager(EService):
 
     HANDLERS = [IndexHandler]
 
-    def __init__(self, context, service_id, port=DEFAULT_PORT):
+    def __init__(self, context, service_id, webui, port):
 
-        super().__init__(context=context, service_id=service_id, port=port)
+        super().__init__(context=context, service_id=service_id, webui=webui,
+                         port=port)
 
         self.settings = {
-            "static_path": STATIC_PATH,
+            "static_path": self.webui + "static/",
             "cookie_secret": COOKIE_SECRET,
-            "template_path": TEMPLATE_PATH,
+            "template_path": self.webui + "templates/",
             "debug": DEBUG,
         }
 
         self.application = Application([], **self.settings)
 
         self.http_server = tornado.httpserver.HTTPServer(self.application)
+
+    @property
+    def webui(self):
+        """Return path to Web UI."""
+
+        return self.params["webui"]
+
+    @webui.setter
+    def webui(self, value):
+        """Set path to Web UI."""
+
+        if "webui" in self.params and self.params["webui"]:
+            raise ValueError("Param webui can not be changed")
+
+        self.params["webui"] = value
 
     @property
     def port(self):
@@ -201,3 +216,10 @@ class APIManager(EService):
         for url in handler.URLS:
             self.log.info("Registering URL: %s", url)
             self.application.add_handlers(r".*$", [(url, handler)])
+
+
+def launch(context, service_id, webui=DEFAULT_WEBUI, port=DEFAULT_PORT):
+    """ Initialize the module. """
+
+    return APIManager(context=context, service_id=service_id, webui=webui,
+                      port=port)
