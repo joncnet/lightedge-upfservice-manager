@@ -20,6 +20,7 @@
 import upfservice.managers.apimanager.apimanager as apimanager
 
 
+# pylint: disable=W0223
 class MatchMapHandler(apimanager.UPFServiceAPIHandler):
     """All the accounts defined in the controller."""
 
@@ -84,4 +85,5 @@ class MatchMapHandler(apimanager.UPFServiceAPIHandler):
 
             ...
         """
+
         self.service.del_matchmap(int(match_index) - 1)
