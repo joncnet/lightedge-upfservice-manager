@@ -93,7 +93,6 @@ class IndexHandler(tornado.web.RequestHandler):
 
     URLS = [r"/", r"/([a-z]*).html"]
 
-    @tornado.web.authenticated
     def get(self, args=None):
         """Render index page."""
 

@@ -318,3 +318,10 @@ class UPFManager(EService):
             return (int(groups[0]), data)
 
         return (int(groups[0]), line)
+
+
+def launch(context, service_id, port=DEFAULT_PORT, host=DEFAULT_HOST,
+           element=DEFAULT_ELEMENT, ue_subnet=DEFAULT_UE_SUBNET):
+    """ Initialize the module. """
+
+    return UPFManager(context, service_id, port, host, element, ue_subnet)
