@@ -45,9 +45,7 @@ class UPFManager(EService):
 
     HANDLERS = [UEMapHandler, MatchMapHandler]
 
-    def __init__(self, context, service_id, port=DEFAULT_PORT,
-                 host=DEFAULT_HOST, element=DEFAULT_ELEMENT,
-                 ue_subnet=DEFAULT_UE_SUBNET):
+    def __init__(self, context, service_id, port, host, element, ue_subnet):
 
         super().__init__(context=context, service_id=service_id, port=port,
                          host=host, element=element, ue_subnet=ue_subnet)
@@ -318,3 +316,11 @@ class UPFManager(EService):
             return (int(groups[0]), data)
 
         return (int(groups[0]), line)
+
+
+def launch(context, service_id, port=DEFAULT_PORT, host=DEFAULT_HOST,
+           element=DEFAULT_ELEMENT, ue_subnet=DEFAULT_UE_SUBNET):
+    """ Initialize the module. """
+
+    return UPFManager(context, service_id, port=port, host=host,
+                      element=element, ue_subnet=ue_subnet)

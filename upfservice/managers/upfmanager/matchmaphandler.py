@@ -68,6 +68,8 @@ class MatchMapHandler(apimanager.UPFServiceAPIHandler):
             ...
         """
         self.service.add_matchmap(int(match_index) - 1, request_data)
+
+        self.set_header("Location", "/upf/v1/matchmap/%s" % match_index)
         self.set_status(201)
 
     @apimanager.validate(min_args=0, max_args=1)
