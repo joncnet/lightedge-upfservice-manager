@@ -27,7 +27,7 @@ from upfservice.managers.upfmanager.uemaphandler import UEMapHandler
 from upfservice.managers.upfmanager.matchmaphandler import MatchMapHandler
 from upfservice.core.service import EService
 
-DEFAULT_HOST = "127.0.0.1"
+DEFAULT_HOST = 'upf-service.default.of.empower' #"127.0.0.1"
 DEFAULT_PORT = 7777
 DEFAULT_ELEMENT = "upfr"
 DEFAULT_UE_SUBNET = "10.0.0.0/8"
@@ -101,7 +101,15 @@ class UPFManager(EService):
         if status != 200:
             raise Exception(response)
 
-        return response
+        fields = ["ue_ip", "enb_ip", "teid_uplink", "epc_ip", "teid_downlink"]
+        uemap = dict()
+
+        for ue_entry in response.split('\n'):
+            if ue_entry != "":
+                ue_dict = dict(zip(fields, ue_entry.split(',')))
+                uemap[ue_dict["ue_ip"]] = ue_dict
+
+        return uemap
 
     @property
     def matchmap(self):
@@ -112,7 +120,18 @@ class UPFManager(EService):
         if status != 200:
             raise Exception(response)
 
-        return response
+        fields = ["ip_proto_num", "dst_ip", "dst_port"]
+        matchmap = list()
+
+        for match_entry in response.split('\n'):
+            if match_entry != "":
+                match_entry = match_entry.split(',')[1]
+                matchmap_dict = dict(zip(fields, match_entry.split('-')))
+                matchmap_dict["dst_ip"], matchmap_dict["netmask"] = \
+                    matchmap_dict["dst_ip"].split('/')
+                matchmap.append(matchmap_dict)
+
+        return matchmap
 
     def add_matchmap(self, match_index, data):
         """Set matchmap."""
@@ -122,24 +141,27 @@ class UPFManager(EService):
             raise ValueError("Matching protocol does not allow ports")
 
         # return an ip address for both ip and hostname
-        if data["netmask"] == 32:
-            data["dst_ip"] = socket.gethostbyname(data["dst_ip"])
-        if data["new_dst_ip"]:
-            data["new_dst_ip"] = socket.gethostbyname(data["new_dst_ip"])
+        try:
+            if data["netmask"] == 32:
+                data["dst_ip"] = socket.gethostbyname(data["dst_ip"])
+            if data["new_dst_ip"]:
+                data["new_dst_ip"] = socket.gethostbyname(data["new_dst_ip"])
+        except Exception as ex:
+            raise KeyError(ex)
 
         status, response = self.write_handler(
             "matchmapinsert",
-            "%s %s-%s/%s-%s" % (match_index, data["ip_proto_num"],
+            "%s,%s-%s/%s-%s" % (match_index, data["ip_proto_num"],
                                 data["dst_ip"], data["netmask"],
                                 data["dst_port"]))
+
+        if status != 200:
+            raise Exception(response)
 
         if data["new_dst_ip"]:
             self._add_rewrite_rule(match_index, data)
         else:
             self._add_dummy_rule(match_index, data)
-
-        if status != 200:
-            raise Exception(response)
 
     def _add_rewrite_rule(self, match_index, data):
 
@@ -181,7 +203,10 @@ class UPFManager(EService):
 
         if match_index != -1:
             action = "matchmapdelete"
-            self.upf_chain.delete_rule(self.upf_chain.rules[match_index])
+            if match_index >= 0 and match_index < len(self.upf_chain.rules):
+                self.upf_chain.delete_rule(self.upf_chain.rules[match_index])
+            else:
+                raise KeyError()
         else:
             action = "matchmapclear"
             self.upf_chain.flush()
@@ -322,5 +347,4 @@ def launch(context, service_id, port=DEFAULT_PORT, host=DEFAULT_HOST,
            element=DEFAULT_ELEMENT, ue_subnet=DEFAULT_UE_SUBNET):
     """ Initialize the module. """
 
-    return UPFManager(context, service_id, port=port, host=host,
-                      element=element, ue_subnet=ue_subnet)
+    return UPFManager(context, service_id, port, host, element, ue_subnet)

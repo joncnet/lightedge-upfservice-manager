@@ -49,8 +49,9 @@ def validate(returncode=200, min_args=0, max_args=0):
 
                 params = {}
 
-                if self.request.body and json.loads(self.request.body):
-                    params = json.loads(self.request.body)
+                request_body = self.request.body.decode('utf-8')
+                if self.request.body and json.loads(request_body):
+                    params = json.loads(request_body)
 
                 if "version" in params:
                     del params["version"]
@@ -93,7 +94,6 @@ class IndexHandler(tornado.web.RequestHandler):
 
     URLS = [r"/", r"/([a-z]*).html"]
 
-    @tornado.web.authenticated
     def get(self, args=None):
         """Render index page."""
 
