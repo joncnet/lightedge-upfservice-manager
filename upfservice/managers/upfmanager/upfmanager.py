@@ -27,7 +27,7 @@ from upfservice.managers.upfmanager.uemaphandler import UEMapHandler
 from upfservice.managers.upfmanager.matchmaphandler import MatchMapHandler
 from upfservice.core.service import EService
 
-DEFAULT_HOST = 'upf-service.default.of.empower' #"127.0.0.1"
+DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 7777
 DEFAULT_ELEMENT = "upfr"
 DEFAULT_UE_SUBNET = "10.0.0.0/8"
