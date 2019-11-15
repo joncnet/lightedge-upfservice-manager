@@ -37,8 +37,33 @@ class UEMapHandler(apimanager.UPFServiceAPIHandler):
         Example URLs:
 
             GET /upf/v1/uemap
-            GET /upf/v1/uemap/10.10.0.5
 
+            {
+                "10.10.0.3": {
+                    "ue_ip": "10.10.0.3",
+                    "enb_ip": "10.0.1.2",
+                    "teid_uplink": "0x00490003",
+                    "epc_ip": "10.244.1.3",
+                    "teid_downlink": "0x00000003"
+                },
+                "10.10.0.2": {
+                    "ue_ip": "10.10.0.2",
+                    "enb_ip": "10.0.1.2",
+                    "teid_uplink": "0x00460003",
+                    "epc_ip": "10.244.1.3",
+                    "teid_downlink": "0x00000001"
+                }
+            }
+
+            GET /upf/v1/uemap/10.10.0.2
+
+            {
+                "ue_ip": "10.10.0.2",
+                "enb_ip": "10.0.1.2",
+                "teid_uplink": "0x00460003",
+                "epc_ip": "10.244.1.3",
+                "teid_downlink": "0x00000001"
+            }
             ...
         """
 

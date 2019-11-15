@@ -38,7 +38,52 @@ class MatchMapHandler(apimanager.UPFServiceAPIHandler):
         Example URLs:
 
             GET /upf/v1/matchmap
-            GET /upf/v1/matchmap/5
+
+            [
+                {
+                    "ip_proto_num": "1",
+                    "dst_ip": "31.13.0.0",
+                    "dst_port": "0",
+                    "netmask": "16",
+                    "new_dst_ip": null,
+                    "new_dst_port": 0
+                },
+                {
+                    "ip_proto_num": "1",
+                    "dst_ip": "2.2.2.2",
+                    "dst_port": "0",
+                    "netmask": "32",
+                    "new_dst_ip": "192.168.0.1",
+                    "new_dst_port": 0
+                },
+                {
+                    "ip_proto_num": "0",
+                    "dst_ip": "31.13.0.0",
+                    "dst_port": "0",
+                    "netmask": "16",
+                    "new_dst_ip": "127.0.0.1",
+                    "new_dst_port": 0
+                },
+                {
+                    "ip_proto_num": "6",
+                    "dst_ip": "18.185.97.149",
+                    "dst_port": "0",
+                    "netmask": "32",
+                    "new_dst_ip": "10.104.0.26",
+                    "new_dst_port": 0
+                }
+            ]
+
+            GET /upf/v1/matchmap/2
+
+            {
+                "ip_proto_num": "1",
+                "dst_ip": "2.2.2.2",
+                "dst_port": "0",
+                "netmask": "32",
+                "new_dst_ip": "192.168.0.1",
+                "new_dst_port": 0
+            }
 
             ...
         """
@@ -64,6 +109,15 @@ class MatchMapHandler(apimanager.UPFServiceAPIHandler):
 
             POST /upf/v1/matchmap
             POST /upf/v1/matchmap/5
+
+            {
+                "ip_proto_num": 6,
+                "dst_ip": "ec2-18-185-97-149.eu-central-1.compute.amazonaws.com",
+                "netmask": 32,
+                "dst_port": 0,
+                "new_dst_ip": "nginx-service",
+                "new_dst_port": 0
+            }
 
             ...
         """
