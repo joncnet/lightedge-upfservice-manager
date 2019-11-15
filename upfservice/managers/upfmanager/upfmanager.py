@@ -125,10 +125,26 @@ class UPFManager(EService):
 
         for match_entry in response.split('\n'):
             if match_entry != "":
-                match_entry = match_entry.split(',')[1]
+                match_index, match_entry = match_entry.split(',')
+                match_index = int(match_index) - 1
                 matchmap_dict = dict(zip(fields, match_entry.split('-')))
                 matchmap_dict["dst_ip"], matchmap_dict["netmask"] = \
                     matchmap_dict["dst_ip"].split('/')
+
+                rule = self.upf_chain.rules[match_index]
+                new_dst = None
+                new_port = 0
+
+                if rule.target.name == "DNAT":
+                    dst = rule.target.to_destination
+                    if ":" in dst:
+                        new_dst, new_port = dst.split(":")
+                    else:
+                        new_dst = dst
+
+                matchmap_dict["new_dst_ip"] = new_dst
+                matchmap_dict["new_dst_port"] = new_port
+
                 matchmap.append(matchmap_dict)
 
         return matchmap
