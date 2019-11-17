@@ -1,23 +1,18 @@
 ## build : docker build -t upfservice-runtime .
 ## run :   docker run --net=host --rm --privileged -it upfservice-runtime
 
-FROM ubuntu:18.04
+FROM ubuntu:19.10
 MAINTAINER Roberto Riggio <rriggio@fbk.eu>
 
-RUN apt update
-RUN apt install -y git software-properties-common build-essential curl wget unzip iptables
-RUN add-apt-repository -y ppa:deadsnakes/ppa
-RUN apt install -y python3.7
-RUN curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-RUN python3.7 get-pip.py
-
-RUN python3.7 -m pip install tornado==6.0.3 pymodm==0.4.1 influxdb==5.2.3 python-iptables==0.14.0
+RUN apt install install python3-pip
+RUN pip3 install tornado==6.0.3 pymodm==0.4.1 influxdb==5.2.3 python-iptables==0.14.0
 
 # Fetching the latest repository from upfservice-runtime.
 RUN wget https://github.com/lightedge/lightedge-upfservice-manager/archive/master.zip
 RUN unzip master.zip
 RUN rm master.zip
 RUN ln -sf /lightedge-upfservice-manager-master/conf/ /etc/upfservice
+RUN mkdir -r /var/www/
 RUN ln -sf /lightedge-upfservice-manager-master/webui/ /var/www/upfservice
 
 # Run the controller
