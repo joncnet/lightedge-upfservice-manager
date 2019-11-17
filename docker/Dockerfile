@@ -13,7 +13,7 @@ RUN wget https://github.com/lightedge/lightedge-upfservice-manager/archive/maste
 RUN unzip master.zip
 RUN rm master.zip
 RUN ln -sf /lightedge-upfservice-manager-master/conf/ /etc/upfservice
-RUN mkdir -r /var/www/
+RUN mkdir -p /var/www/
 RUN ln -sf /lightedge-upfservice-manager-master/webui/ /var/www/upfservice
 
 # Run the controller
