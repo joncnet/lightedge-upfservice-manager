@@ -23,6 +23,7 @@ import time
 
 from iptc import Chain, Match, Rule, Table
 
+from upfservice.managers.upfmanager.match import Match
 from upfservice.managers.upfmanager.uemaphandler import UEMapHandler
 from upfservice.managers.upfmanager.matchmaphandler import MatchMapHandler
 from upfservice.core.service import EService
@@ -45,18 +46,25 @@ class UPFManager(EService):
 
     HANDLERS = [UEMapHandler, MatchMapHandler]
 
+    accounts = {}
+
     def __init__(self, context, service_id, port, host, element, ue_subnet):
 
         super().__init__(context=context, service_id=service_id, port=port,
                          host=host, element=element, ue_subnet=ue_subnet)
+
         self._prot_port_supp = {6: "tcp", 17: "udp", 132: "sctp"}
 
     def start(self):
+        """Start UPF manager."""
 
         super().start()
 
         self._init_click_upf()
         self._init_netfilter()
+
+        for account in Match.objects.all():
+            self.matches.append(account)
 
     def _init_click_upf(self):
 

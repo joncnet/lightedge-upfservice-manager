@@ -85,7 +85,6 @@ class MatchMapHandler(apimanager.UPFServiceAPIHandler):
                 "new_dst_port": 0
             }
 
-            ...
         """
 
         if match_index:
@@ -112,7 +111,8 @@ class MatchMapHandler(apimanager.UPFServiceAPIHandler):
 
             {
                 "ip_proto_num": 6,
-                "dst_ip": "ec2-18-185-97-149.eu-central-1.compute.amazonaws.com",
+                "dst_ip":
+                    "ec2-18-185-97-149.eu-central-1.compute.amazonaws.com",
                 "netmask": 32,
                 "dst_port": 0,
                 "new_dst_ip": "nginx-service",
@@ -121,12 +121,13 @@ class MatchMapHandler(apimanager.UPFServiceAPIHandler):
 
             ...
         """
+
         self.service.add_matchmap(int(match_index) - 1, request_data)
 
         self.set_header("Location", "/upf/v1/matchmap/%s" % match_index)
         self.set_status(201)
 
-    @apimanager.validate(min_args=0, max_args=1)
+    @apimanager.validate(min_args=1, max_args=1)
     def delete(self, match_index=0):
         """Delete entries in the Match Map.
 
@@ -139,7 +140,6 @@ class MatchMapHandler(apimanager.UPFServiceAPIHandler):
             DELETE /upf/v1/matchmap
             DELETE /upf/v1/matchmap/5
 
-            ...
         """
 
         self.service.del_matchmap(int(match_index) - 1)
