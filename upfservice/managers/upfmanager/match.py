@@ -17,6 +17,8 @@
 
 """Match Class."""
 
+import socket
+
 from pymodm import MongoModel, fields
 from upfservice.core.serialize import serializable_dict
 
@@ -25,13 +27,58 @@ from upfservice.core.serialize import serializable_dict
 class Match(MongoModel):
     """An user account on this controller."""
 
-    ip_proto_num = fields.IntegerField(primary_key=True)
+    index = fields.IntegerField(primary_key=True,
+                                min_value=0,
+                                required=True)
+    desc = fields.CharField(required=True)
+    ip_proto_num = fields.IntegerField(min_value=0,
+                                       required=True)
+    dst_ip = fields.CharField(required=True)
+    dst_port = fields.IntegerField(min_value=0,
+                                   max_value=65535,
+                                   required=True)
+    netmask = fields.IntegerField(min_value=0,
+                                  max_value=32,
+                                  required=True)
+    new_dst_ip = fields.CharField(blank=True,
+                                  required=True)
+    new_dst_port = fields.IntegerField(min_value=0,
+                                       max_value=65535,
+                                       required=True)
+
+    def from_dict(self, index, data):
+
+        super().__init__()
+
+        self.index = index
+        self.desc = data["desc"]
+        self.ip_proto_num = int(data["ip_proto_num"])
+        self.dst_port = int(data["dst_port"])
+        self.netmask = int(data["netmask"])
+        self.new_dst_port = int(data["new_dst_port"])
+
+        # return an ip address for both ip and hostname
+        try:
+            self.dst_ip = socket.gethostbyname(data["dst_ip"])
+            if data["new_dst_ip"]:
+                self.new_dst_ip = socket.gethostbyname(data["new_dst_ip"])
+            else:
+                self.new_dst_ip = None
+        except Exception as ex:
+            raise KeyError(ex)
 
     def to_dict(self):
         """Return JSON-serializable representation of the object."""
 
         return {
-            'ip_proto_num': self.ip_proto_num
+            "index": self.index,
+            "desc": self.desc,
+            "ip_proto_num": self.ip_proto_num,
+            "dst_ip": self.dst_ip,
+            "dst_port": self.dst_port,
+            "netmask": self.netmask,
+            "new_dst_ip": self.new_dst_ip,
+            "new_dst_port": self.new_dst_port,
         }
 
     def to_str(self):

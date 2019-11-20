@@ -127,7 +127,7 @@ class MatchMapHandler(apimanager.UPFServiceAPIHandler):
         self.set_header("Location", "/upf/v1/matchmap/%s" % match_index)
         self.set_status(201)
 
-    @apimanager.validate(min_args=1, max_args=1)
+    @apimanager.validate(min_args=0, max_args=1)
     def delete(self, match_index=0):
         """Delete entries in the Match Map.
 
@@ -142,4 +142,5 @@ class MatchMapHandler(apimanager.UPFServiceAPIHandler):
 
         """
 
+        # no match in url -> match_index < 0 -> remove all
         self.service.del_matchmap(int(match_index) - 1)
