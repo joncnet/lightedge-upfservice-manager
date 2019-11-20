@@ -21,7 +21,7 @@ import re
 import socket
 import time
 
-from iptc import Chain, Match, Rule, Table
+from iptc import Chain, Match as IPT_Match, Rule, Table
 
 from upfservice.managers.upfmanager.match import Match
 from upfservice.managers.upfmanager.uemaphandler import UEMapHandler
@@ -32,6 +32,33 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 7777
 DEFAULT_ELEMENT = "upfr"
 DEFAULT_UE_SUBNET = "10.0.0.0/8"
+
+
+class MatchList(list):
+
+    def insert(self, index, match):
+
+        super().insert(index, match)
+
+        for match in self:
+            match.delete()
+
+        new_index = 0
+        for match in self:
+            match.index = new_index
+            match.save()
+            new_index += 1
+
+    def pop(self, index: int = -1):
+
+        self[index].delete()
+        super().pop(index)
+
+    def clear(self):
+
+        for match in self:
+            match.delete()
+        super().clear()
 
 
 class UPFManager(EService):
@@ -46,14 +73,13 @@ class UPFManager(EService):
 
     HANDLERS = [UEMapHandler, MatchMapHandler]
 
-    accounts = {}
-
     def __init__(self, context, service_id, port, host, element, ue_subnet):
 
         super().__init__(context=context, service_id=service_id, port=port,
                          host=host, element=element, ue_subnet=ue_subnet)
 
         self._prot_port_supp = {6: "tcp", 17: "udp", 132: "sctp"}
+        self.matches = MatchList()
 
     def start(self):
         """Start UPF manager."""
@@ -63,14 +89,14 @@ class UPFManager(EService):
         self._init_click_upf()
         self._init_netfilter()
 
-        for account in Match.objects.all():
-            self.matches.append(account)
+        for match in Match.objects.all():
+            self.add_matchmap(match.index, match)
 
     def _init_click_upf(self):
 
         while True:
             try:
-                self.read_handler("uemap")
+                self.write_handler("matchmapclear", "0")
                 break
             except:
                 self.log.info("Waiting for Click UPF to start...")
@@ -129,15 +155,25 @@ class UPFManager(EService):
             raise Exception(response)
 
         fields = ["ip_proto_num", "dst_ip", "dst_port"]
-        matchmap = list()
+        matchmaplist = list()
 
         for match_entry in response.split('\n'):
             if match_entry != "":
+
+                matchmap_dict = dict()
+
                 match_index, match_entry = match_entry.split(',')
                 match_index = int(match_index) - 1
-                matchmap_dict = dict(zip(fields, match_entry.split('-')))
-                matchmap_dict["dst_ip"], matchmap_dict["netmask"] = \
-                    matchmap_dict["dst_ip"].split('/')
+                matchmap_dict["index"] = match_index
+
+                ip_proto_num, dst_ip, dst_port = match_entry.split('-')
+                matchmap_dict["ip_proto_num"] = int(ip_proto_num)
+                matchmap_dict["dst_port"] = int(dst_port)
+
+                dst_ip, netmask = dst_ip.split('/')
+                matchmap_dict["dst_ip"] = dst_ip
+                matchmap_dict["netmask"] = int(netmask)
+
 
                 rule = self.upf_chain.rules[match_index]
                 new_dst = None
@@ -151,73 +187,76 @@ class UPFManager(EService):
                         new_dst = dst
 
                 matchmap_dict["new_dst_ip"] = new_dst
-                matchmap_dict["new_dst_port"] = new_port
+                matchmap_dict["new_dst_port"] = int(new_port)
 
-                matchmap.append(matchmap_dict)
+                matchmap_dict["desc"] = self.matches[match_index].desc
 
-        return matchmap
+                matchmaplist.append(matchmap_dict)
+
+        if matchmaplist != [match.to_dict() for match in self.matches]:
+            raise ValueError("Inconsistencies in the matches")
+
+        return matchmaplist
 
     def add_matchmap(self, match_index, data):
         """Set matchmap."""
 
-        if (data["dst_port"] != 0 or data["new_dst_port"] != 0) \
-                and data["ip_proto_num"] not in self._prot_port_supp:
-            raise ValueError("Matching protocol does not allow ports")
+        if isinstance(data, Match):
+            match = data
+        else:
+            match = Match()
+            match.from_dict(match_index, data)
 
-        # return an ip address for both ip and hostname
-        try:
-            if data["netmask"] == 32:
-                data["dst_ip"] = socket.gethostbyname(data["dst_ip"])
-            if data["new_dst_ip"]:
-                data["new_dst_ip"] = socket.gethostbyname(data["new_dst_ip"])
-        except Exception as ex:
-            raise KeyError(ex)
+        if (match.dst_port != 0 or match.new_dst_port != 0) \
+                and match.ip_proto_num not in self._prot_port_supp:
+            raise ValueError("Matching protocol does not allow ports")
 
         status, response = self.write_handler(
             "matchmapinsert",
-            "%s,%s-%s/%s-%s" % (match_index, data["ip_proto_num"],
-                                data["dst_ip"], data["netmask"],
-                                data["dst_port"]))
+            "%s,%s-%s/%s-%s" % (match.index, match.ip_proto_num, match.dst_ip,
+                                match.netmask, match.dst_port))
 
         if status != 200:
             raise Exception(response)
 
-        if data["new_dst_ip"]:
-            self._add_rewrite_rule(match_index, data)
+        if match.new_dst_ip:
+            self._add_rewrite_rule(match)
         else:
-            self._add_dummy_rule(match_index, data)
+            self._add_dummy_rule(match)
 
-    def _add_rewrite_rule(self, match_index, data):
+        self.matches.insert(match.index, match)
 
-        rule = self._get_base_rule(data)
+    def _add_rewrite_rule(self, match):
+
+        rule = self._get_base_rule(match)
 
         rule.create_target("DNAT")
-        rule.target.to_destination = data["new_dst_ip"]
+        rule.target.to_destination = match.new_dst_ip
 
-        if data["new_dst_port"] != 0:
-            rule.target.to_destination += ":%s" % data["new_dst_port"]
+        if match.new_dst_port != 0:
+            rule.target.to_destination += ":%s" % match.new_dst_port
 
-        self.upf_chain.insert_rule(rule, match_index)
+        self.upf_chain.insert_rule(rule, match.index)
         self.nat_table.refresh()
 
-    def _add_dummy_rule(self, match_index, data):
+    def _add_dummy_rule(self, match):
 
-        rule = self._get_base_rule(data)
+        rule = self._get_base_rule(match)
 
         rule.create_target("ACCEPT")
 
-        self.upf_chain.insert_rule(rule, match_index)
+        self.upf_chain.insert_rule(rule, match.index)
         self.nat_table.refresh()
 
-    def _get_base_rule(self, data):
+    def _get_base_rule(self, match):
 
         rule = Rule()
-        rule.protocol = data["ip_proto_num"]
-        rule.dst = "%s/%s" % (data["dst_ip"], data["netmask"])
+        rule.protocol = match.ip_proto_num
+        rule.dst = "%s/%s" % (match.dst_ip, match.netmask)
 
-        if data["dst_port"] != 0:
-            match = Match(rule, self._prot_port_supp[data["ip_proto_num"]])
-            match.dport = str(data["dst_port"])
+        if match.dst_port != 0:
+            match = IPT_Match(rule, self._prot_port_supp[match.ip_proto_num])
+            match.dport = str(match.dst_port)
             rule.add_match(match)
 
         return rule
@@ -229,11 +268,13 @@ class UPFManager(EService):
             action = "matchmapdelete"
             if match_index >= 0 and match_index < len(self.upf_chain.rules):
                 self.upf_chain.delete_rule(self.upf_chain.rules[match_index])
+                self.matches.pop(match_index)
             else:
                 raise KeyError()
         else:
             action = "matchmapclear"
             self.upf_chain.flush()
+            self.matches.clear()
 
         status, response = self.write_handler(action, match_index)
 
