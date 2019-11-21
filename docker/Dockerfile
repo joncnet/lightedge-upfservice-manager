@@ -1,5 +1,5 @@
-## build : docker build -t upfservice-runtime .
-## run :   docker run --net=host --rm --privileged -it upfservice-runtime
+## build : docker build -t lightedge-upfservice-manager .
+## run :   docker run --net=host --rm --privileged -it lightedge-upfservice-manager
 
 FROM ubuntu:19.10
 MAINTAINER Roberto Riggio <rriggio@fbk.eu>
