@@ -12,9 +12,10 @@ RUN pip3 install tornado==6.0.3 pymodm==0.4.1 influxdb==5.2.3 python-iptables==0
 RUN wget https://github.com/lightedge/lightedge-upfservice-manager/archive/master.zip
 RUN unzip master.zip
 RUN rm master.zip
-RUN ln -sf /lightedge-upfservice-manager-master/conf/ /etc/upfservice
-RUN mkdir -p /var/www/
-RUN ln -sf /lightedge-upfservice-manager-master/webui/ /var/www/upfservice
+RUN mkdir -p /etc/lightedge/
+RUN ln -sf /lightedge-upfservice-manager-master/conf/ /etc/lightedge/upfservice
+RUN mkdir -p /var/lightedge/www/
+RUN ln -sf /lightedge-upfservice-manager-master/webui/ /var/www/lightedge/upfservice
 
 # Run the controller
 ENTRYPOINT ["python3.7", "/lightedge-upfservice-manager-master/upfservice-runtime.py"]

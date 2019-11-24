@@ -19,11 +19,11 @@
 
 from setuptools import setup, find_packages
 
-setup(name="upfservice-runtime",
+setup(name="lightedge-upfservice",
       version="1.0",
-      description="UPF Service Runtime",
+      description="LightEdge UPF Service",
       author="Roberto Riggio",
       author_email="rriggio@fbk.eu",
       url="http://lightedge.io/",
-      long_description="UPF Service Runtime",
+      long_description="The LightEdge UPF Service",
       packages=find_packages())

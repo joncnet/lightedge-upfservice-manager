@@ -21,4 +21,4 @@ from upfservice.main import main
 
 
 if __name__ == '__main__':
-    main(config="/etc/upfservice/")
+    main(config="/etc/lightedge/upfservice")
