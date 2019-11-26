@@ -15,7 +15,7 @@ RUN unzip master.zip
 RUN rm master.zip
 RUN mkdir -p /etc/lightedge/
 RUN ln -sf /lightedge-upfservice-manager-master/conf/ /etc/lightedge/upfservice
-RUN mkdir -p /var/lightedge/www/
+RUN mkdir -p /var/www/lightedge/
 RUN ln -sf /lightedge-upfservice-manager-master/webui/ /var/www/lightedge/upfservice
 
 # Run the controller
