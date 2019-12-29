@@ -17,7 +17,12 @@
 
 """API Manager (REST Northbound Interface)."""
 
+import inspect
 import json
+import base64
+import re
+
+from uuid import UUID
 
 import tornado.web
 import tornado.httpserver
@@ -27,11 +32,13 @@ from pymodm.errors import ValidationError
 
 from upfservice.core.serialize import serialize
 from upfservice.core.service import EService
+from upfservice.core.launcher import srv_or_die
 
 DEBUG = True
 DEFAULT_PORT = 8888
-DEFAULT_WEBUI = "/var/www/upfservice/"
+DEFAULT_WEBUI = "/var/www/lightedge/upfservice/"
 COOKIE_SECRET = b'xyRTvZpRSUyk8/9/McQAvsQPB4Rqv0w9mBtIpH9lf1o='
+LOGIN_URL = "/auth/login"
 
 
 def validate(returncode=200, min_args=0, max_args=0):
@@ -49,9 +56,8 @@ def validate(returncode=200, min_args=0, max_args=0):
 
                 params = {}
 
-                request_body = self.request.body.decode('utf-8')
-                if self.request.body and json.loads(request_body):
-                    params = json.loads(request_body)
+                if self.request.body and json.loads(self.request.body):
+                    params = json.loads(self.request.body)
 
                 if "version" in params:
                     del params["version"]
@@ -74,7 +80,7 @@ def validate(returncode=200, min_args=0, max_args=0):
                 self.send_error(400, message=str(ex))
 
             except ValidationError as ex:
-                self.send_error(400, message=str(ex))
+                self.send_error(400, message=ex.message)
 
             self.set_status(returncode, None)
 
@@ -86,21 +92,32 @@ def validate(returncode=200, min_args=0, max_args=0):
 
 
 # pylint: disable=W0223
-class IndexHandler(tornado.web.RequestHandler):
-    """Index page handler."""
+class BaseHandler(tornado.web.RequestHandler):
+    """Base Handler."""
 
     # service associated to this handler
     service = None
 
+    URLS = []
+
+    def get_current_user(self):
+        """Return username of the currently logged user or None."""
+
+        return self.get_secure_cookie("username")
+
+
+class IndexHandler(BaseHandler):
+    """Index page handler."""
+
     URLS = [r"/", r"/([a-z]*).html"]
 
+    @tornado.web.authenticated
     def get(self, args=None):
         """Render index page."""
 
         try:
 
             page = "index.html" if not args else "%s.html" % args
-
             self.render(page)
 
         except KeyError as ex:
@@ -110,7 +127,7 @@ class IndexHandler(tornado.web.RequestHandler):
             self.send_error(400, message=str(ex))
 
 
-class UPFServiceAPIHandler(tornado.web.RequestHandler):
+class EmpowerAPIHandler(tornado.web.RequestHandler):
     """Base class for all the REST calls."""
 
     # service associated to this handler
@@ -121,13 +138,13 @@ class UPFServiceAPIHandler(tornado.web.RequestHandler):
 
         self.set_header('Content-Type', 'application/json')
 
-        out = {
+        value = {
             "title": self._reason,
             "status_code": status_code,
             "detail": kwargs.get("message"),
         }
 
-        self.finish(json.dumps(out))
+        self.finish(json.dumps(serialize(value), indent=4))
 
     def write_as_json(self, value):
         """Return reply as a json document."""
@@ -140,18 +157,118 @@ class UPFServiceAPIHandler(tornado.web.RequestHandler):
         self.set_header('Content-Type', 'application/json')
 
 
-class APIManager(EService):
-    """Service exposing the UPF Service REST API
+BOILER_PLATE = """# REST API
 
-    This service exposes the UPF Service API, the 'port' parameter
-    specifies on which port the HTTP server should listen.
+The REST API consists of a set of RESTful resources and their attributes.
+The base URL for the REST API is the following:
+
+    http{s}://{hostname}:{port}/api/v1/{resource}
+
+Of course, you need to replace hostname and port with the hostname/port
+combination for your controller.
+
+The current (and only) version of the API is v1.
+ """
+
+
+# pylint: disable=W0223
+class DocHandler(EmpowerAPIHandler):
+    """Generates markdown documentation."""
+
+    URLS = [r"/api/v1/doc/?"]
+
+    def get(self):
+        """Generates markdown documentation.
+
+        Args:
+
+            None
+
+        Example URLs:
+
+            GET /api/v1/doc
+        """
+
+        exclude_list = ["StaticFileHandler", "DocHandler"]
+        handlers = set()
+        accum = [BOILER_PLATE]
+
+        for rule in self.service.application.default_router.rules:
+            if not rule.target.rules:
+                continue
+            handlers.add(rule.target.rules[0].target)
+
+        handlers = sorted(handlers, key=lambda x: x.__name__)
+
+        accum.append("## <a name='handlers'></a>Handlers\n")
+
+        for handler in handlers:
+
+            if handler.__name__ in exclude_list:
+                continue
+
+            accum.append(" * [%s](#%s)" %
+                         (handler.__name__, handler.__name__))
+
+        accum.append("\n")
+
+        for handler in handlers:
+
+            if handler.__name__ in exclude_list:
+                continue
+
+            accum.append("# <a name='%s'></a>%s ([Top](#handlers))\n" %
+                         (handler.__name__, handler.__name__))
+
+            accum.append("%s\n" % inspect.getdoc(handler))
+
+            if hasattr(handler, "URLS") and handler.URLS:
+                accum.append("### URLs\n")
+                for url in handler.URLS:
+                    accum.append("    %s" % url)
+
+            accum.append("\n")
+
+            if hasattr(handler, "get"):
+                doc = inspect.getdoc(getattr(handler, "get"))
+                if doc:
+                    accum.append("### GET\n")
+                    accum.append(doc)
+                    accum.append("\n")
+
+            if hasattr(handler, "put"):
+                doc = inspect.getdoc(getattr(handler, "put"))
+                if doc:
+                    accum.append("### PUT\n")
+                    accum.append(doc)
+                    accum.append("\n")
+
+            if hasattr(handler, "post"):
+                doc = inspect.getdoc(getattr(handler, "post"))
+                if doc:
+                    accum.append("### POST\n")
+                    accum.append(doc)
+                    accum.append("\n")
+
+            if hasattr(handler, "delete"):
+                doc = inspect.getdoc(getattr(handler, "delete"))
+                if doc:
+                    accum.append("### DELETE\n")
+                    accum.append(doc)
+                    accum.append("\n")
+
+        self.write('\n'.join(accum))
+
+
+class APIManager(EService):
+    """Service exposing a REST API
 
     Parameters:
         port: the port on which the HTTP server should listen (optional,
             default: 8888)
     """
 
-    HANDLERS = [IndexHandler]
+    HANDLERS = [IndexHandler, DocHandler]
 
     def __init__(self, context, service_id, webui, port):
 
@@ -162,6 +279,7 @@ class APIManager(EService):
             "static_path": self.webui + "static/",
             "cookie_secret": COOKIE_SECRET,
             "template_path": self.webui + "templates/",
+            "login_url": LOGIN_URL,
             "debug": DEBUG,
         }
 

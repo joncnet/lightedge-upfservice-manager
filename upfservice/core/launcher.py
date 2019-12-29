@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Bootstrap module."""
+"""Launcher module."""
 
 import configparser
 import ssl
@@ -92,7 +92,7 @@ def _do_launch(managers, managers_order):
 def _setup_db(args):
     """ Setup db connection. """
 
-    runtime_config = args.config + "/upfservice.cfg"
+    runtime_config = args.config + "/runtime.cfg"
     config = configparser.ConfigParser()
     config.read(runtime_config)
 
@@ -128,7 +128,7 @@ def _post_startup():
 def _read_config(args):
     """Read config file."""
 
-    runtime_config = args.config + "/upfservice.cfg"
+    runtime_config = args.config + "/runtime.cfg"
     config = configparser.ConfigParser()
     config.read(runtime_config)
 
@@ -159,7 +159,7 @@ def _read_config(args):
             if param == 'module':
                 continue
 
-            managers[mngr][param] = config[mngr][param]
+            managers[mngr]["params"][param] = config[mngr][param]
 
     return managers, managers_order
 

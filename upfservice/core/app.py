@@ -15,4 +15,16 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Main package."""
+"""Application."""
+
+from upfservice.core.service import EService
+
+EVERY = 2000
+
+
+class EApp(EService):
+    """Base app class."""
+
+    def __init__(self, context, **kwargs):
+
+        super().__init__(context=context, **kwargs)

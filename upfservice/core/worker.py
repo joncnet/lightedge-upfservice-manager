@@ -15,4 +15,16 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Main package."""
+"""Worker."""
+
+from upfservice.core.service import EService
+
+EVERY = 2000
+
+
+class EWorker(EService):
+    """Base worker class."""
+
+    def __init__(self, context, **kwargs):
+
+        super().__init__(context=context, **kwargs)

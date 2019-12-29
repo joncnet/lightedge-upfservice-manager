@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Base service class."""
+"""Service."""
 
 import uuid
 import pkgutil
@@ -49,9 +49,6 @@ class EService:
 
         # Service's callbacks
         self.callbacks = set()
-
-        # Human readable name
-        self.name = "%s" % self.__class__.__module__
 
         # Set logger
         self.log = logging.getLogger(self.name)
@@ -119,6 +116,7 @@ class EService:
         output = {}
 
         output['service_id'] = self.service_id
+        output['manifest'] = self.manifest
         output['name'] = self.name
         output['params'] = self.params
 
@@ -126,6 +124,18 @@ class EService:
             output['project_id'] = self.context.project_id
 
         return output
+
+    @property
+    def name(self):
+        """Get name."""
+
+        return "%s" % self.__class__.__module__
+
+    @property
+    def manifest(self):
+        """Get manifest."""
+
+        return self.context.manager.catalog[self.name]
 
     @property
     def service_id(self):
@@ -159,9 +169,9 @@ class EService:
             self.start()
 
     def write_points(self, points):
-        """Write points to InfluxDB."""
+        """Write points to context."""
 
-        self.context.ts_manager.write_points(points)
+        self.context.write_points(points)
 
     def start(self):
         """Start control loop."""
@@ -222,8 +232,10 @@ class EService:
 
             name = package.__name__ + "." + module_name + "." + module_name
 
-            if 'name' not in manifest:
-                manifest['name'] = module_name
+            manifest['name'] = name
+
+            if 'label' not in manifest:
+                manifest['label'] = module_name
 
             if 'desc' not in manifest:
                 manifest['desc'] = "No description available"
