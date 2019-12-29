@@ -14,7 +14,7 @@ LightEdge is a standard compliant implementation of the ETSI MEC Architecture.
 * Supports opensource and commercial LTE eNodeBs and EPCs
 * Implements standard ETSI MEC service interface
 
-Checkout out our [website](http://lightedge.io/) and our [wiki](https://github.com/lightedge/lightedge,github.io/wiki)
+Checkout out our [website](http://lightedge.io/) and our [wiki](https://github.com/lightedge/lightedge.github.io/wiki)
 
 ### License
 Code is released under the Apache License, Version 2.0.
