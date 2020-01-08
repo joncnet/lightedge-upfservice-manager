@@ -36,9 +36,7 @@ DEFAULT_UE_SUBNET = "10.0.0.0/8"
 
 class MatchList(list):
 
-    def insert(self, index, match):
-
-        super().insert(index, match)
+    def _update_index(self):
 
         for match in self:
             match.delete()
@@ -49,10 +47,18 @@ class MatchList(list):
             match.save()
             new_index += 1
 
+    def insert(self, index, match):
+
+        super().insert(index, match)
+
+        self._update_index()
+
     def pop(self, index: int = -1):
 
         self[index].delete()
         super().pop(index)
+
+        self._update_index()
 
     def clear(self):
 
@@ -174,7 +180,6 @@ class UPFManager(EService):
                 matchmap_dict["dst_ip"] = dst_ip
                 matchmap_dict["netmask"] = int(netmask)
 
-
                 rule = self.upf_chain.rules[match_index]
                 new_dst = None
                 new_port = 0
@@ -206,6 +211,10 @@ class UPFManager(EService):
         else:
             match = Match()
             match.from_dict(match_index, data)
+
+        if match.index not in range(0, len(self.matches) + 1):
+            raise ValueError("Indexes must be within 1 and %s"
+                             % (len(self.matches) + 1))
 
         if (match.dst_port != 0 or match.new_dst_port != 0) \
                 and match.ip_proto_num not in self._prot_port_supp:
@@ -255,9 +264,10 @@ class UPFManager(EService):
         rule.dst = "%s/%s" % (match.dst_ip, match.netmask)
 
         if match.dst_port != 0:
-            match = IPT_Match(rule, self._prot_port_supp[match.ip_proto_num])
-            match.dport = str(match.dst_port)
-            rule.add_match(match)
+            ipt_match = IPT_Match(rule,
+                                  self._prot_port_supp[match.ip_proto_num])
+            ipt_match.dport = str(match.dst_port)
+            rule.add_match(ipt_match)
 
         return rule
 

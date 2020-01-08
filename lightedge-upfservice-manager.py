@@ -17,7 +17,7 @@
 
 """Launch the UPF Service Runtime."""
 
-from upfservice.main import main
+from upfservice.core.launcher import main
 
 
 if __name__ == '__main__':

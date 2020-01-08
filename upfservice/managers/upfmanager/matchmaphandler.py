@@ -21,7 +21,7 @@ import upfservice.managers.apimanager.apimanager as apimanager
 
 
 # pylint: disable=W0223
-class MatchMapHandler(apimanager.UPFServiceAPIHandler):
+class MatchMapHandler(apimanager.EmpowerAPIHandler):
     """All the accounts defined in the controller."""
 
     URLS = [r"/upf/v1/matchmap/([0-9.]*)",
@@ -92,7 +92,7 @@ class MatchMapHandler(apimanager.UPFServiceAPIHandler):
 
         return self.service.matchmap
 
-    @apimanager.validate(min_args=0, max_args=1)
+    @apimanager.validate(returncode=201, min_args=0, max_args=1)
     def post(self, match_index=1, **request_data):
         """Insert entry in the Match Map.
 
@@ -127,7 +127,7 @@ class MatchMapHandler(apimanager.UPFServiceAPIHandler):
         self.set_header("Location", "/upf/v1/matchmap/%s" % match_index)
         self.set_status(201)
 
-    @apimanager.validate(min_args=0, max_args=1)
+    @apimanager.validate(returncode=204, min_args=0, max_args=1)
     def delete(self, match_index=0):
         """Delete entries in the Match Map.
 

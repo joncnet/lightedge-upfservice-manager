@@ -111,7 +111,6 @@ class IndexHandler(BaseHandler):
 
     URLS = [r"/", r"/([a-z]*).html"]
 
-    @tornado.web.authenticated
     def get(self, args=None):
         """Render index page."""
 
@@ -279,7 +278,6 @@ class APIManager(EService):
             "static_path": self.webui + "static/",
             "cookie_secret": COOKIE_SECRET,
             "template_path": self.webui + "templates/",
-            "login_url": LOGIN_URL,
             "debug": DEBUG,
         }
 
