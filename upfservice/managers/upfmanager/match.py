@@ -84,9 +84,12 @@ class Match(MongoModel):
     def to_str(self):
         """Return an ASCII representation of the object."""
 
-        out = "%s/%u (%u): -> %s/%u" % (self.dst_port, self.netmask,
-                                        self.ip_proto_num, self.new_dst_ip,
-                                        self.new_dst_port)
+        out = "%s/%u:%u (prot: %u): -> %s:%u" % (self.dst_ip,
+                                                   self.netmask,
+                                                   self.dst_port,
+                                                   self.ip_proto_num,
+                                                   self.new_dst_ip,
+                                                   self.new_dst_port)
 
         return out
 

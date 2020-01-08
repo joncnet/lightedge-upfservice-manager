@@ -21,7 +21,7 @@ import upfservice.managers.apimanager.apimanager as apimanager
 
 
 # pylint: disable=W0223
-class UEMapHandler(apimanager.UPFServiceAPIHandler):
+class UEMapHandler(apimanager.EmpowerAPIHandler):
     """All the accounts defined in the controller."""
 
     URLS = [r"/upf/v1/uemap/?", r"/upf/v1/uemap/([0-9.]*)"]
