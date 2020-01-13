@@ -4,10 +4,14 @@
 
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-  <h1 class="h3 mb-0 text-gray-800">UE Map</h1>
+  <h1 class="h3 mb-0 text-gray-800">UE map</h1>
     <div >
-      <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" onclick="refresh()"><i class="fas fa-undo fa-sm text-white-50"></i> Refresh</a>
+      <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" onclick="refresh_datatable()"><i class="fas fa-undo fa-sm text-white-50"></i> Refresh</a>
   </div>
+</div>
+
+<!-- Alert Box -->
+<div id="alert_box" class="my-2 p-2">
 </div>
 
 <!-- DataTales Example -->
@@ -23,5 +27,5 @@
 {% end %}
 
 {% block js %}
-<script src="/static/js/lightedge-uemap.js"></script>
+<script src="/static/js/pages/lightedge-uemap.js"></script>
 {% end %}
