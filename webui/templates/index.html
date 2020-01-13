@@ -6,7 +6,7 @@
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
   <h1 class="h3 mb-0 text-gray-800">Summary</h1>
   <div >
-    <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" onclick="refresh()"><i class="fas fa-undo fa-sm text-white-50"></i> Refresh</a>
+    <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" onclick="refresh_maps()"><i class="fas fa-undo fa-sm text-white-50"></i> Refresh</a>
   </div>
 </div>
 
@@ -20,10 +20,10 @@
         <div class="row no-gutters align-items-center">
           <div class="col mr-2">
             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">UE Map</div>
-            <div id="uemap" class="h5 mb-0 font-weight-bold text-gray-800">1</div>
+            <div id="uemap" class="h5 mb-0 font-weight-bold text-gray-800"></div>
           </div>
           <div class="col-auto">
-            <i class="fas fa-user fa-2x text-gray-300"></i>
+            <i class="fas fa-mobile-alt fa-2x text-gray-300"></i>
           </div>
         </div>
       </div>
@@ -37,10 +37,10 @@
         <div class="row no-gutters align-items-center">
           <div class="col mr-2">
             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Match Map</div>
-            <div id="matchmap" class="h5 mb-0 font-weight-bold text-gray-800">1</div>
+            <div id="matchmap" class="h5 mb-0 font-weight-bold text-gray-800"></div>
           </div>
           <div class="col-auto">
-            <i class="fas fa-unlink fa-2x text-gray-300"></i>
+            <i class="fas fa-route fa-2x text-gray-300"></i>
           </div>
         </div>
       </div>
@@ -52,5 +52,5 @@
 {% end %}
 
 {% block js %}
-<script src="/static/js/lightedge-index.js"></script>
+<script src="/static/js/pages/lightedge-index.js"></script>
 {% end %}

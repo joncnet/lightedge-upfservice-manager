@@ -18,10 +18,13 @@
   <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
 
   <!-- Custom styles for this template-->
-  <link href="/static/css/sb-admin-2.min.css" rel="stylesheet">
+  <link href="/static/vendor/sb-admin2/css/sb-admin-2.min.css" rel="stylesheet">
 
   <!-- Custom styles for this page -->
   <link href="/static/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+
+  <!-- Lightedge styles for this page -->
+  <link href="/static/css/lightedge.css" rel="stylesheet">
 
 </head>
 
@@ -56,14 +59,14 @@
       <!-- Nav Item - UE Map -->
       <li class="nav-item">
         <a class="nav-link" href="/uemap.html">
-          <i class="fas fa-fw fa-rocket"></i>
+          <i class="fas fa-fw fa-mobile-alt"></i>
           <span>UE Map</span></a>
       </li>
 
       <!-- Nav Item - Match Map -->
       <li class="nav-item">
         <a class="nav-link" href="/matchmap.html">
-          <i class="fas fa-fw fa-rocket"></i>
+          <i class="fas fa-fw fa-route"></i>
           <span>Match Map</span></a>
       </li>
 
@@ -146,14 +149,19 @@
   <script src="/static/vendor/jquery-easing/jquery.easing.min.js"></script>
 
   <!-- Custom scripts for all pages-->
-  <script src="/static/js/sb-admin-2.min.js"></script>
+  <script src="/static/vendor/sb-admin2/js/sb-admin-2.min.js"></script>
 
   <!-- Page level plugins -->
   <script src="/static/vendor/datatables/jquery.dataTables.min.js"></script>
   <script src="/static/vendor/datatables/dataTables.bootstrap4.min.js"></script>
 
   <!-- LightEdge scripts for all pages-->
-  <script src="/static/js/lightedge-general.js"></script>
+  <script src="/static/js/lightedge-globals.js"></script>
+  <script src="/static/js/lightedge-log.js"></script>
+  <script src="/static/js/lightedge-corefunctions.js"></script>
+  <script src="/static/js/lightedge-request.js"></script>
+  <script src="/static/js/lightedge-alert.js"></script>
+  <script src="/static/js/lightedge-modal.js"></script>
 
   <!-- Custom scripts for specific page-->
   {% block js %}
