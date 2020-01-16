@@ -18,6 +18,7 @@
 """Match Class."""
 
 import socket
+from ipaddress import ip_network
 
 from pymodm import MongoModel, fields
 from upfservice.core.serialize import serializable_dict
@@ -60,6 +61,9 @@ class Match(MongoModel):
         # return an ip address for both ip and hostname
         try:
             self.dst_ip = socket.gethostbyname(data["dst_ip"])
+            dst_subnet = "%s/%s" % (self.dst_ip, self.netmask)
+            _ = ip_network(dst_subnet)  # raises a ValueError if invalid
+
             if data["new_dst_ip"]:
                 self.new_dst_ip = socket.gethostbyname(data["new_dst_ip"])
             else:
