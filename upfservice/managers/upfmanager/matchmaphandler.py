@@ -24,7 +24,7 @@ import upfservice.managers.apimanager.apimanager as apimanager
 class MatchMapHandler(apimanager.EmpowerAPIHandler):
     """All the accounts defined in the controller."""
 
-    URLS = [r"/upf/v1/matchmap/([0-9.]*)",
+    URLS = [r"/upf/v1/matchmap/([-0-9.]*)",
             r"/upf/v1/matchmap"]
 
     @apimanager.validate(min_args=0, max_args=1)

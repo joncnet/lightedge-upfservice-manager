@@ -141,7 +141,7 @@ class UPFManager(EService):
         if status != 200:
             raise Exception(response)
 
-        fields = ["ue_ip", "enb_ip", "teid_uplink", "epc_ip", "teid_downlink"]
+        fields = ["ue_ip", "enb_ip", "teid_downlink", "epc_ip", "teid_uplink"]
         uemap = dict()
 
         for ue_entry in response.split('\n'):
