@@ -382,7 +382,8 @@ function lightedge_alert_format_content(args){
     }
     else{
       detail = detail +" <pre class='mb-0'>" +
-      "Check LOG for further details about this error" + "</pre>"
+      // "Check LOG for further details about this error" + "</pre>"
+      " NO responseText (DELETE response?)" + "</pre>"
     }
   }
   else{

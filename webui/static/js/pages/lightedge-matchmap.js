@@ -3,35 +3,82 @@ console.log("__LIGHTEDGE_WEBUI",__LIGHTEDGE_WEBUI)
 
 $(document).ready(function() {
 
+  CF = __LIGHTEDGE_WEBUI.CORE_FUNCTIONS
+
   ENTITY = __LIGHTEDGE_WEBUI.ENTITY.MATCHMAP
 
   // MODAL_FIELD__ADDRESS= "address"
   // MODAL_FIELD__DESCRIPTION= "desc"
 
+  DEFAULT_PRIORITY_VALUE = 1
+  DEFAULT_DESCRIPTION_VALUE = ""
+  DEFAULT_IP_PROTOCOL_SELECT_VALUE = 6 // TCP protocol
+  DEFAULT_IP_PROTOCOL_NUMBER_VALUE = 6
+  DEFAULT_DESTINATION_IP_VALUE = ""
+  DEFAULT_DESTINATION_PORT_VALUE = 0
+  DEFAULT_NETMASK_VALUE = 32
+  DEFAULT_NEW_DESTINATION_IP_VALUE = ""
+  DEFAULT_NEW_DESTINATION_PORT_VALUE = 0
+
+  IP_PROTOCOL_SELECT_OPTIONS = [
+    {
+      label: "TCP",
+      value: 6,
+      allow_port: true
+    },
+    {
+      label: "UDP",
+      value: 17,
+      allow_port: true
+    },
+    {
+      label: "SCTP",
+      value: 132,
+      allow_port: true
+    },
+    {
+      label: "CUSTOM",
+      value: "",
+      allow_port: false
+    }
+  ]
+
   FIELDS = {
     priority: {
-      type: "TEXT"
+      type: "TEXT",
+      default: DEFAULT_PRIORITY_VALUE,
     },
     desc: {
-      type: "TEXT"
+      type: "TEXT",
+      default: DEFAULT_DESCRIPTION_VALUE
+    },
+    ip_proto_select: {
+      type: "SELECT",
+      default: DEFAULT_IP_PROTOCOL_SELECT_VALUE,
     },
     ip_proto_num: {
-      type: "TEXT"
+      type: "TEXT",
+      default: DEFAULT_IP_PROTOCOL_NUMBER_VALUE
     },
     dst_ip: {
-      type: "TEXT"
+      type: "TEXT",
+      default: DEFAULT_DESTINATION_IP_VALUE
     },
     dst_port: {
-      type: "TEXT"
+      type: "TEXT",
+      default: DEFAULT_DESTINATION_PORT_VALUE
     },
     netmask: {
-      type: "TEXT"
+      type: "TEXT",
+      default: DEFAULT_NETMASK_VALUE
     },
     new_dst_ip: {
-      type: "TEXT"
+      type: "TEXT",
+      default: DEFAULT_NEW_DESTINATION_IP_VALUE
     },
     new_dst_port: {
-      type: "TEXT"
+      type: "TEXT",
+      default: DEFAULT_NEW_DESTINATION_PORT_VALUE
     },
   }
 
@@ -40,6 +87,8 @@ $(document).ready(function() {
     ENTITY
   ).add_fields(FIELDS)
 
+  reset2modal_defaults(__LIGHTEDGE_WEBUI.MODAL.TYPE.ADD)
+
   REMOVE_MODAL = new WEBUI_Modal_Entity(
     __LIGHTEDGE_WEBUI.MODAL.TYPE.REMOVE,
     ENTITY
@@ -47,6 +96,7 @@ $(document).ready(function() {
 
   aoColumns = [
     { "sTitle": "Priority" },
+    { "sTitle": "Description" },
     { "sTitle": "IP Protocol#" },
     { "sTitle": "DST IP" },
     { "sTitle": "DST Port" },
@@ -58,9 +108,7 @@ $(document).ready(function() {
 
   DATATABLE = $('#dataTable').DataTable({
   "aoColumns": aoColumns
-  });
-
-  CF = __LIGHTEDGE_WEBUI.CORE_FUNCTIONS
+  });  
 
   refresh_datatable();
 });
@@ -68,6 +116,48 @@ $(document).ready(function() {
 ENTITY = null
 FIELDS = {}
 CF = null
+
+function reset_modal_ip_proto_select_options(modal_type){
+  let modal = null
+  switch(modal_type){
+    case __LIGHTEDGE_WEBUI.MODAL.TYPE.ADD:
+      modal = ADD_MODAL
+      break
+    case __LIGHTEDGE_WEBUI.MODAL.TYPE.REMOVE:
+      modal = REMOVE_MODAL
+      break
+  }
+  if (CF._is_there(modal)){
+    let options = []
+    IP_PROTOCOL_SELECT_OPTIONS.forEach(function(option){
+      let label = option.label + " ["+option.value+"]"
+      if (option.label === "CUSTOM"){
+        label = option.label
+      }
+      options.push({
+        label: label,
+        value: option.value
+      })
+    })
+    modal.ip_proto_select.reset(options)
+  }
+}
+
+function reset2modal_defaults(modal_type){
+  switch(modal_type){
+    case __LIGHTEDGE_WEBUI.MODAL.TYPE.ADD:
+      $.each(FIELDS, function(key, data){
+        if (key === "ip_proto_select"){
+          reset_modal_ip_proto_select_options(modal_type)
+          ADD_MODAL[key].set(data.default)
+        }
+        ADD_MODAL[key].set(data.default)
+      })
+      break
+    case __LIGHTEDGE_WEBUI.MODAL.TYPE.REMOVE_MODAL:
+      break
+  }
+}
 
 function add() {
 
@@ -80,7 +170,10 @@ function add() {
   let index = null
   $.each(FIELDS, function(key, val){
     if (key !== 'priority'){
-      if ((key === "dst_port") || (key === "new_dst_port") || (key === "ip_proto_num") || (key === "netmask")){
+      if (key === "ip_proto_select"){
+        // skip this params
+      }
+      else if ((key === "dst_port") || (key === "new_dst_port") || (key === "ip_proto_num") || (key === "netmask")){
         data[key] = parseInt(ADD_MODAL[key].get())
       }
       else{
@@ -192,6 +285,7 @@ function format_datatable_data( data ) {
     DATATABLE.row.add([
       "<div class='text-center'>"+index+"</div>",
       val['ip_proto_num'],
+      val['desc'],
       val['dst_ip'],
       val['dst_port'],
       val['netmask'],
@@ -224,4 +318,89 @@ function refresh_datatable() {
   .perform()
 
   
+}
+
+function update_selected_pn(op){
+  let modal = null
+  let select_wrapper = null
+  let input_wrapper = null
+  let dst_port_wrapper = null
+  let new_dst_port_wrapper = null
+  switch(op){
+    case "ADD":
+      modal = ADD_MODAL
+      select_wrapper = $("#add_ip_proto_select_wrapper")
+      input_wrapper = $("#add_ip_proto_num_wrapper")
+      dst_port_wrapper = $("#add_dst_port_wrapper")
+      new_dst_port_wrapper = $("#add_new_dst_port_wrapper")
+      // console.log(select_wrapper)
+      // console.log(input_wrapper)
+      break
+  }
+  if (CF._is_there(modal)){
+    let select = modal.ip_proto_select
+    let input = modal.ip_proto_num
+
+    input.set(select.get())
+
+    let value = input.get()
+    // console.log("value === ",parseInt(value))
+    if (Number.isNaN(parseInt(value))){
+      CF._enable(input.$instance)
+      select_wrapper.removeClass("col-8 pr-0")
+      select_wrapper.addClass("col-4 pr-1")
+      input_wrapper.removeClass("d-none")
+      dst_port_wrapper.removeClass("d-flex")
+      new_dst_port_wrapper.removeClass("d-flex")
+      dst_port_wrapper.addClass("d-none")
+      new_dst_port_wrapper.addClass("d-none")
+    }
+    else{
+      CF._disable(input.$instance)
+      select_wrapper.addClass("col-8 pr-0")
+      select_wrapper.removeClass("col-4 pr-1")
+      input_wrapper.addClass("d-none")
+      dst_port_wrapper.removeClass("d-none")
+      new_dst_port_wrapper.removeClass("d-none")
+      dst_port_wrapper.addClass("d-flex")
+      new_dst_port_wrapper.addClass("d-flex")
+    }
+    IP_PROTOCOL_SELECT_OPTIONS.some(function(elem){
+      console.log(elem.value, value)
+      if ((parseInt(elem.value) === parseInt(value)) ||
+          (Number.isNaN(parseInt(elem.value)) && Number.isNaN(parseInt(value)))){
+          enable_ports("ADD", elem.allow_port)
+          return true
+      }
+    })
+  }
+}
+
+function enable_ports(op, enable){
+  let modal = null
+  switch(op){
+    case "ADD":
+      modal = ADD_MODAL
+      break
+  }
+  if (CF._is_there(modal)){
+    let port = modal.dst_port
+    let new_port = modal.new_dst_port
+    if (enable){
+      console.log("enabling",op,enable)
+      CF._enable(port.$instance)
+      CF._enable(new_port.$instance)
+    }
+    else{
+      console.log("disabling",op,enable)
+      port.set(DEFAULT_DESTINATION_PORT_VALUE)
+      new_port.set(DEFAULT_NEW_DESTINATION_PORT_VALUE)
+
+      CF._disable(port.$instance)
+      CF._disable(new_port.$instance)
+
+    }
+   
+
+  }
 }

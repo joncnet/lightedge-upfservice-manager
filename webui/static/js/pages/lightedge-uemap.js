@@ -57,7 +57,7 @@ $(document).ready(function() {
 
   aoColumns = [
     { "sTitle": "UE IP" },
-    { "sTitle": "ENb IP" },
+    { "sTitle": "eNB IP" },
     { "sTitle": "TEID UPLINK" },
     { "sTitle": "EPC IP" },
     { "sTitle": "TEID DOWNLINK" },

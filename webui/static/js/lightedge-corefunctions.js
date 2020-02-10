@@ -90,6 +90,24 @@ class WEBUI_CoreFunctions{
   }
 
   /**
+   * This functions disables a JQuery object
+   * @param {Object} jqobj - the jQuery Object to be disabled
+   * @return {boolean} returns always true
+   */
+  _disable(jqobj){
+    jqobj.prop("disabled", true)
+  }
+
+  /**
+   * This functions enables a JQuery object
+   * @param {Object} jqobj - the jQuery Object to be enabled
+   * @return {boolean} returns always true
+   */
+  _enable(jqobj){
+    jqobj.prop("disabled", false)
+  }
+
+  /**
    * This functions wraps a string into html tag and adds attributes (if provided) to the resulting element.
    * NB: no check performed over data types, tag/attributes consistency and to_be_wrapped content
    * @param {string} to_be_wrapped - string to be wrapped

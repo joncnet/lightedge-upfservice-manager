@@ -39,6 +39,102 @@
       </div>
       <div class="modal-body">
         <form role="form">
+
+          <div class="form-group">
+            <label class="font-weight-bold">Description</label>
+            <input id="add_desc" class="form-control text-xs" placeholder="default: null [type: string]">
+            <div class="text-xs text-gray-500 mt-1">Short description for the matchmap</div>
+          </div>
+
+          <div class="form-group d-flex">
+            <label class="col-4 mt-1 p-0 font-weight-bold text-left pr-4">
+              <span>Priority</span>
+            </label>
+            <div class="row col-8">
+              <input class="form-control col-12 text-xs" id="add_priority" placeholder="default: 1 [type: int]">
+              <div class="text-xs text-gray-500 col-12 pl-0 mt-1">Priority for the new match [1, #matches]</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="font-weight-bold">Forwarding</label>
+            <div class="px-2">
+              
+              <div class="form-group row mb-2">
+                <label class="col-4 my-auto p-0 font-italic text-right pr-2 small">
+                  <span>IP Protocol Number</span>
+                </label>
+                <div class="col-8 pr-0 pl-0" id="add_ip_proto_select_wrapper">
+                  <select class="form-control text-xs" id="add_ip_proto_select" onchange="update_selected_pn('ADD')"></select>
+                </div>
+                <div class="d-none col-4 pl-1 pr-0" id="add_ip_proto_num_wrapper">
+                  <input class="form-control col-12 text-xs" id="add_ip_proto_num" placeholder="1">
+                </div>
+                <div class="col-4"></div>
+                <div class="text-xs text-gray-500 pl-0 mt-1 col-8">IANA IP protocol number [type: integer]</div>
+              </div>
+              
+              <div class="form-group row mb-2">
+                <label class="col-4 my-auto font-italic text-right pr-4 small">
+                  <span>Destination IP</span>
+                </label>
+                <input class="form-control col-8 text-xs" id="add_dst_ip" placeholder="default: null [type: string]">
+                <div class="col-4"></div>
+                <div class="text-xs text-gray-500 pl-0 mt-1 col-8">Destination Address or IP Address [X.X.X.X or url]</div>
+              </div>
+              
+              <div class="form-group row mb-2" id="add_dst_port_wrapper">
+                <label class="col-4 my-auto font-italic text-right pr-4 small">
+                  <span>Destination Port</span>
+                </label>
+                <input class="form-control col-8 text-xs" id="add_dst_port" placeholder="default: 0 [type: integer]">
+                <div class="col-4"></div>
+                <div class="text-xs text-gray-500 pl-0 mt-1 col-8">Destination Port (available for certain protocols only)</div>
+              </div>
+              
+              <div class="row d-flex">
+                <label class="col-4 my-auto font-italic text-right pr-4 small">
+                  <span>Netmask</span>
+                </label>
+                <div class="input-group col-8 p-0">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text text-xs">/</div>
+                  </div>
+                  <input type="text" class="form-control text-xs" id="add_netmask" placeholder="default: 32 [type: integer]">
+                </div>
+                <div class="col-4"></div>
+                <div class="text-xs text-gray-500 pl-0 mt-1 col-8">Netmask [0 - 32]. Use "32" for a single destination host</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="font-weight-bold">Rewriting</label class="font-weight-bold">
+            <div class="px-2">
+              
+              <div class="form-group row mb-2">
+                <label class="col-4 my-auto font-italic text-right pr-4 pl-0 small">
+                  <span>New Destination IP</span>
+                </label>
+                <input class="form-control col-8 text-xs" id="add_new_dst_ip" placeholder="default: null [type: string]">
+                <div class="col-4"></div>
+                <div class="text-xs text-gray-500 pl-0 mt-1 col-8">New Destination Address or IP Address [X.X.X.X or url]</div>
+              </div>
+              
+              <div class="form-group row mb-2" id="add_new_dst_port_wrapper">
+                <label class="col-4 my-auto font-italic text-right pr-4 pl-0 small">
+                  <span>New Destination Port</span>
+                </label>
+                <input class="form-control col-8 text-xs" id="add_new_dst_port" placeholder="default: 0 [type: integer]">
+                <div class="col-4"></div>
+                <div class="text-xs text-gray-500 pl-0 mt-1 col-8">New Destination Port (available for certain protocols only)</div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <!-- <div class="modal-body">
+        <form role="form">
           <div class="form-group">
             <label>Description</label>
             <input id="add_desc" class="form-control">
@@ -72,7 +168,7 @@
             <input id="add_priority" class="form-control">
           </div>
         </form>
-      </div>
+      </div> -->
       <div class="modal-footer">
         <a href="#" data-dismiss="modal" class="btn btn-sm btn-secondary shadow-sm"><i class="fas fa-sm text-white-50"></i>Cancel</a>
         <a href="#" onclick="add()" data-toggle="modal" data-target="#add_MATCHMAP_Modal" class="btn btn-sm btn-primary shadow-sm"><i class="fas fa-sm text-white-50"></i>Add</a>
