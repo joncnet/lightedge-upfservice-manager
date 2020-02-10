@@ -317,6 +317,7 @@ class WEBUI_ModalField_CheckBox extends WEBUI_ModalField{
 class WEBUI_ModalField_Select extends WEBUI_ModalField{
   constructor(field_id){
     super(field_id)
+    console.log("modal_field_SELECT")
   }
 
   set_value(value){
@@ -325,6 +326,34 @@ class WEBUI_ModalField_Select extends WEBUI_ModalField{
 
   get_value(){
     return this.get_$instance().val()
+  }
+
+  reset(options, value=0){
+    this.reset_options_from_descriptor(options)
+    if (this._is_there(value)){
+      this.set_value(value)
+    }
+    return this
+  }
+
+  add_option(label, value){
+    this.get_$instance().append(
+      new Option(label, value))
+  }
+
+  reset_options_from_descriptor(descriptor){
+    // descriptor structure:
+    // [
+    //   {
+    //     label: "label1",
+    //     value: "value1"
+    //   }
+    //   ...
+    // ]
+    this.get_$instance().empty()
+    descriptor.forEach(function(item){
+      this.add_option(item.label, item.value)
+    }, this)
   }
 }
 
