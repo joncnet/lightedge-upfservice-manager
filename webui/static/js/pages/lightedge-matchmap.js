@@ -14,6 +14,7 @@ $(document).ready(function() {
   DEFAULT_DESCRIPTION_VALUE = ""
   DEFAULT_IP_PROTOCOL_SELECT_VALUE = 6 // TCP protocol
   DEFAULT_IP_PROTOCOL_NUMBER_VALUE = 6
+  DEFAULT_IP_PROTOCOL_NUMBER_CUSTOM_VALUE = 0
   DEFAULT_DESTINATION_IP_VALUE = ""
   DEFAULT_DESTINATION_PORT_VALUE = 0
   DEFAULT_NETMASK_VALUE = 32
@@ -21,6 +22,11 @@ $(document).ready(function() {
   DEFAULT_NEW_DESTINATION_PORT_VALUE = 0
 
   IP_PROTOCOL_SELECT_OPTIONS = [
+    {
+      label: "ICMP",
+      value: 1,
+      allow_port: false
+    },
     {
       label: "TCP",
       value: 6,
@@ -88,6 +94,8 @@ $(document).ready(function() {
   ).add_fields(FIELDS)
 
   reset2modal_defaults(__LIGHTEDGE_WEBUI.MODAL.TYPE.ADD)
+
+  update_description()
 
   REMOVE_MODAL = new WEBUI_Modal_Entity(
     __LIGHTEDGE_WEBUI.MODAL.TYPE.REMOVE,
@@ -175,6 +183,23 @@ function add() {
       }
       else if ((key === "dst_port") || (key === "new_dst_port") || (key === "ip_proto_num") || (key === "netmask")){
         data[key] = parseInt(ADD_MODAL[key].get())
+        if (Number.isNaN(data[key])){
+          switch(key){
+            case "new_dst_port":
+              data[key] = DEFAULT_NEW_DESTINATION_PORT_VALUE
+              break
+            case "dst_port":
+              data[key] = DEFAULT_DESTINATION_PORT_VALUE
+              break
+            case "ip_proto_num":
+              data[key] = DEFAULT_IP_PROTOCOL_NUMBER_CUSTOM_VALUE
+              break
+            case "netmask":
+              data[key] = DEFAULT_NETMASK_VALUE
+              break
+          }
+        }
+        console.log(key, data[key])
       }
       else{
         data[key] = ADD_MODAL[key].get()
@@ -185,6 +210,9 @@ function add() {
       let value = ADD_MODAL[key].get()
       if (CF._is_there(value) && (value !== "")){
         index = value
+      }
+      else{
+        index = DEFAULT_PRIORITY_VALUE
       }
     }
   })
@@ -231,17 +259,27 @@ function trigger_remove_modal( matchmap_key ) {
     REMOVE_MODAL.get_$instance().modal({show:true})
   }
 
-  REST_REQ(ENTITY).configure_GET({
-    key: matchmap_key,
-    success: [ lightedge_log_response, show_remove_modal],
-    error: [ lightedge_log_response,  lightedge_alert_generate_error ]
-  })
-  .perform()
+  // if (true){
+  //   show_remove_modal({
+  //     priority: matchmap_key,
+  //     desc: "Tutto farlocco"
+  //   })
+  // }
+  // else{
+    REST_REQ(ENTITY).configure_GET({
+      key: matchmap_key,
+      success: [ lightedge_log_response, show_remove_modal],
+      error: [ lightedge_log_response,  lightedge_alert_generate_error ]
+    })
+    .perform()
+  // }
 }
 
 function remove(){
 
   let key = REMOVE_MODAL.priority.get()
+
+  console.log("matchmap TO BE REMOVED, key: ", key)
   
   REMOVE_MODAL.reset()
 
@@ -275,17 +313,14 @@ function format_datatable_data( data ) {
     let index = val['index']+1
 
     actions = ""+
-      // '<button class="btn btn-sm btn-warning shadow-sm mr-xl-1 mb-md-1 m-1" '+
-      // 'onclick="trigger_edit_modal(\''+val['addr']+'\')">'+
-      // '<i class="fas fa-edit fa-sm fa-fw text-white-50 mr-xl-1 m-1"></i><span class="d-none d-xl-inline">Edit</span></button>'+
       '<button class="btn btn-sm btn-danger shadow-sm mb-xl-1 m-1" '+
       'onclick="trigger_remove_modal(\''+ index +'\')">'+
       '<i class="fas fa-trash fa-sm fa-fw text-white-50 mr-xl-1 m-1"></i><span class="d-none d-xl-inline">Remove</span></button>'
 
     DATATABLE.row.add([
       "<div class='text-center'>"+index+"</div>",
-      val['ip_proto_num'],
       val['desc'],
+      val['ip_proto_num'],
       val['dst_ip'],
       val['dst_port'],
       val['netmask'],
@@ -302,15 +337,9 @@ function format_datatable_data( data ) {
 
 function refresh_datatable() {
 
+  console.log("refreshing datatable")
+
   DATATABLE.clear();
-  // if(__LIGHTEDGE_WEBUI.TEST){
-  //   REST_REQ(ENTITY).configure_GET({
-  //     success: [ format_datatable_data ],
-  //     error: [ format_datatable_data ]
-  //   })
-  //   .perform()
-  //   return
-  // }
   REST_REQ(ENTITY).configure_GET({
     success: [ lightedge_log_response, format_datatable_data],
     error: [ lightedge_log_response,  lightedge_alert_generate_error ]
@@ -318,6 +347,22 @@ function refresh_datatable() {
   .perform()
 
   
+}
+
+function update_description(){
+  
+  let description = ADD_MODAL["desc"].get()
+  // console.log("update_description, value = '"+description+"'")
+  let button = $("#add_button")
+  if (CF._is_there(description) &&
+     (description !== "")){
+    // console.log("enabled")
+    CF._enable(button)
+  }
+  else{
+    // console.log("disabled")
+    CF._disable(button)
+  }
 }
 
 function update_selected_pn(op){
@@ -333,8 +378,6 @@ function update_selected_pn(op){
       input_wrapper = $("#add_ip_proto_num_wrapper")
       dst_port_wrapper = $("#add_dst_port_wrapper")
       new_dst_port_wrapper = $("#add_new_dst_port_wrapper")
-      // console.log(select_wrapper)
-      // console.log(input_wrapper)
       break
   }
   if (CF._is_there(modal)){
@@ -344,32 +387,33 @@ function update_selected_pn(op){
     input.set(select.get())
 
     let value = input.get()
-    // console.log("value === ",parseInt(value))
-    if (Number.isNaN(parseInt(value))){
-      CF._enable(input.$instance)
-      select_wrapper.removeClass("col-8 pr-0")
-      select_wrapper.addClass("col-4 pr-1")
-      input_wrapper.removeClass("d-none")
-      dst_port_wrapper.removeClass("d-flex")
-      new_dst_port_wrapper.removeClass("d-flex")
-      dst_port_wrapper.addClass("d-none")
-      new_dst_port_wrapper.addClass("d-none")
-    }
-    else{
-      CF._disable(input.$instance)
-      select_wrapper.addClass("col-8 pr-0")
-      select_wrapper.removeClass("col-4 pr-1")
-      input_wrapper.addClass("d-none")
-      dst_port_wrapper.removeClass("d-none")
-      new_dst_port_wrapper.removeClass("d-none")
-      dst_port_wrapper.addClass("d-flex")
-      new_dst_port_wrapper.addClass("d-flex")
-    }
+
     IP_PROTOCOL_SELECT_OPTIONS.some(function(elem){
       console.log(elem.value, value)
-      if ((parseInt(elem.value) === parseInt(value)) ||
-          (Number.isNaN(parseInt(elem.value)) && Number.isNaN(parseInt(value)))){
+      if ((""+elem.value) === (""+value)){
+          // ALLOW PORTS
           enable_ports("ADD", elem.allow_port)
+          if (elem.allow_port){
+            dst_port_wrapper.removeClass("d-none")
+            new_dst_port_wrapper.removeClass("d-none")
+          }
+          else{
+            dst_port_wrapper.addClass("d-none")
+            new_dst_port_wrapper.addClass("d-none")   
+          }
+          // CUSTOM option
+          if (value === ""){
+            CF._enable(input.$instance)
+            select_wrapper.removeClass("col-8 pr-0")
+            select_wrapper.addClass("col-4 pr-1")
+            input_wrapper.removeClass("d-none")
+          }
+          else{
+            CF._disable(input.$instance)
+            select_wrapper.addClass("col-8 pr-0")
+            select_wrapper.removeClass("col-4 pr-1")
+            input_wrapper.addClass("d-none")
+          }
           return true
       }
     })
