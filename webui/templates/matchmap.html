@@ -9,6 +9,7 @@
       <button href="#" data-toggle="modal" data-target="#add_MATCHMAP_Modal" class="btn btn-sm btn-primary shadow-sm"><i class="fas fa-plus fa-sm text-white-50"></i> Add MATCHMAP</button>
       <button href="#" class="btn btn-sm btn-primary shadow-sm" onclick="refresh_datatable()"><i class="fas fa-undo fa-sm text-white-50"></i> Refresh</button>
       <button href="#" class="btn btn-sm btn-danger shadow-sm" onclick="confirm_remove_all()"><i class="fas fa-bomb fa-sm text-white-50"></i> REMOVE ALL</button>
+      <!-- <button href="#" class="btn btn-sm btn-danger shadow-sm" onclick="trigger_remove_modal(1)"><i class="fas fa-trash-bin fa-sm text-white-50"></i> REMOVE TEST</button> -->
   </div>
 </div>
 
@@ -42,7 +43,7 @@
 
           <div class="form-group">
             <label class="font-weight-bold">Description</label>
-            <input id="add_desc" class="form-control text-xs" placeholder="default: null [type: string]">
+            <input id="add_desc" class="form-control text-xs" placeholder="MANDATORY - Add button disabled if void [type: string]" onchange="update_description()">
             <div class="text-xs text-gray-500 mt-1">Short description for the matchmap</div>
           </div>
 
@@ -68,7 +69,7 @@
                   <select class="form-control text-xs" id="add_ip_proto_select" onchange="update_selected_pn('ADD')"></select>
                 </div>
                 <div class="d-none col-4 pl-1 pr-0" id="add_ip_proto_num_wrapper">
-                  <input class="form-control col-12 text-xs" id="add_ip_proto_num" placeholder="1">
+                  <input class="form-control col-12 text-xs" id="add_ip_proto_num" placeholder="0">
                 </div>
                 <div class="col-4"></div>
                 <div class="text-xs text-gray-500 pl-0 mt-1 col-8">IANA IP protocol number [type: integer]</div>
@@ -170,8 +171,8 @@
         </form>
       </div> -->
       <div class="modal-footer">
-        <a href="#" data-dismiss="modal" class="btn btn-sm btn-secondary shadow-sm"><i class="fas fa-sm text-white-50"></i>Cancel</a>
-        <a href="#" onclick="add()" data-toggle="modal" data-target="#add_MATCHMAP_Modal" class="btn btn-sm btn-primary shadow-sm"><i class="fas fa-sm text-white-50"></i>Add</a>
+        <button href="#" data-dismiss="modal" class="btn btn-sm btn-secondary shadow-sm"><i class="fas fa-sm text-white-50"></i>Cancel</button>
+        <button href="#" id="add_button" onclick="add()" data-toggle="modal" data-target="#add_MATCHMAP_Modal" class="btn btn-sm btn-primary shadow-sm"><i class="fas fa-sm text-white-50"></i>Add</button>
       </div>
     </div>
   </div>
