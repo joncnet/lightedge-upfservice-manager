@@ -381,9 +381,22 @@ function lightedge_alert_format_content(args){
       }
     }
     else{
-      detail = detail +" <pre class='mb-0'>" +
-      // "Check LOG for further details about this error" + "</pre>"
-      " NO responseText (DELETE response?)" + "</pre>"
+      // detail = detail +" <pre class='mb-0'>" +
+      // // "Check LOG for further details about this error" + "</pre>"
+      // " NO responseText (DELETE response?)" + "</pre>"
+      if (this._is_there(args[2])){
+        let status = args[2].status
+        if (status !== 204){
+          detail = detail +" <pre class='mb-0'>" +
+          "Check LOG for further details about this anomaly\n" + 
+          " NO responseText" + "</pre>"
+        }
+      }
+      else{
+        detail = detail +" <pre class='mb-0'>" +
+          "Check LOG for further details about this anomaly\n" + 
+          " NO responseText" + "</pre>"
+      }
     }
   }
   else{

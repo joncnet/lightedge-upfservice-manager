@@ -49,8 +49,6 @@ $(document).ready(function() {
     }
   ]
 
-  set_options_labels()
-
   FIELDS = {
     priority: {
       type: "TEXT",
@@ -164,7 +162,6 @@ function set_options_labels(){
   let options = []
   IP_PROTOCOL_SELECT_OPTIONS.forEach(function(elem, index){
     let obj = {}
-    console.log("elem", elem)
     $.each(elem, function(key, item){
       if (key === "label"){
         if (item !== "CUSTOM"){
@@ -178,6 +175,7 @@ function set_options_labels(){
         obj[key] = item
       }
     })
+    console.log("set_options_labels, ", elem.label,":",obj.label)
     options.push(obj)
   })
   console.log("options:",options)
