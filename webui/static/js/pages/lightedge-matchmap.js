@@ -88,19 +88,52 @@ $(document).ready(function() {
     },
   }
 
+  RESET_DEFAULTS={
+    priority: {
+      value: DEFAULT_PRIORITY_VALUE,
+    },
+    desc: {
+      value: DEFAULT_DESCRIPTION_VALUE
+    },
+    ip_proto_select: {
+      options: IP_PROTOCOL_SELECT_OPTIONS,
+      value: DEFAULT_IP_PROTOCOL_SELECT_VALUE
+    },
+    ip_proto_num: {
+      value: DEFAULT_IP_PROTOCOL_NUMBER_VALUE
+    },
+    dst_ip: {
+      value: DEFAULT_DESTINATION_IP_VALUE
+    },
+    dst_port: {
+      value: DEFAULT_DESTINATION_PORT_VALUE
+    },
+    netmask: {
+      value: DEFAULT_NETMASK_VALUE
+    },
+    new_dst_ip: {
+      value: DEFAULT_NEW_DESTINATION_IP_VALUE
+    },
+    new_dst_port: {
+      value: DEFAULT_NEW_DESTINATION_PORT_VALUE
+    },
+  }
+
   ADD_MODAL = new WEBUI_Modal_Entity(
     __LIGHTEDGE_WEBUI.MODAL.TYPE.ADD,
     ENTITY
   ).add_fields(FIELDS)
 
   reset2modal_defaults(__LIGHTEDGE_WEBUI.MODAL.TYPE.ADD)
-
+  update_selected_pn(__LIGHTEDGE_WEBUI.MODAL.TYPE.ADD)
   update_description()
 
   REMOVE_MODAL = new WEBUI_Modal_Entity(
     __LIGHTEDGE_WEBUI.MODAL.TYPE.REMOVE,
     ENTITY
   ).add_fields(FIELDS)
+
+  reset2modal_defaults(__LIGHTEDGE_WEBUI.MODAL.TYPE.REMOVE)
 
   aoColumns = [
     { "sTitle": "Priority" },
@@ -152,18 +185,18 @@ function reset_modal_ip_proto_select_options(modal_type){
 }
 
 function reset2modal_defaults(modal_type){
+  modal = null
   switch(modal_type){
     case __LIGHTEDGE_WEBUI.MODAL.TYPE.ADD:
-      $.each(FIELDS, function(key, data){
-        if (key === "ip_proto_select"){
-          reset_modal_ip_proto_select_options(modal_type)
-          ADD_MODAL[key].set(data.default)
-        }
-        ADD_MODAL[key].set(data.default)
-      })
+      modal = ADD_MODAL
       break
-    case __LIGHTEDGE_WEBUI.MODAL.TYPE.REMOVE_MODAL:
+    case __LIGHTEDGE_WEBUI.MODAL.TYPE.REMOVE:
+      modal = REMOVE_MODAL
       break
+  }
+  if (CF._is_there(modal)){
+    console.log("resetting defaults",modal_type)
+    modal.reset(RESET_DEFAULTS)
   }
 }
 
@@ -171,8 +204,6 @@ function add() {
 
   let data = {
     "version":"1.0",
-    // "addr": ADD_MODAL.address.get(),
-    // "desc": ADD_MODAL.desc.get()
   }
 
   let index = null
@@ -226,7 +257,11 @@ function add() {
 
   console.log("data: ",data)
   
-  add_reset = ADD_MODAL.reset.bind(ADD_MODAL)
+  let add_reset = function(){
+    ADD_MODAL.reset(RESET_DEFAULTS) //.bind(ADD_MODAL)
+    update_description()
+    update_selected_pn(__LIGHTEDGE_WEBUI.MODAL.TYPE.ADD)
+  }
 
   REST_REQ(ENTITY).configure_POST({
     data: data,
@@ -259,20 +294,13 @@ function trigger_remove_modal( matchmap_key ) {
     REMOVE_MODAL.get_$instance().modal({show:true})
   }
 
-  // if (true){
-  //   show_remove_modal({
-  //     priority: matchmap_key,
-  //     desc: "Tutto farlocco"
-  //   })
-  // }
-  // else{
-    REST_REQ(ENTITY).configure_GET({
-      key: matchmap_key,
-      success: [ lightedge_log_response, show_remove_modal],
-      error: [ lightedge_log_response,  lightedge_alert_generate_error ]
-    })
-    .perform()
-  // }
+  REST_REQ(ENTITY).configure_GET({
+    key: matchmap_key,
+    success: [ lightedge_log_response, show_remove_modal],
+    error: [ lightedge_log_response,  lightedge_alert_generate_error ]
+  })
+  .perform()
+  
 }
 
 function remove(){
@@ -281,7 +309,8 @@ function remove(){
 
   console.log("matchmap TO BE REMOVED, key: ", key)
   
-  REMOVE_MODAL.reset()
+  // REMOVE_MODAL.reset(RESET_DEFAULTS)
+  reset2modal_defaults(__LIGHTEDGE_WEBUI.MODAL.TYPE.REMOVE)
 
   REST_REQ(ENTITY).configure_DELETE({
     key: key,
@@ -366,13 +395,14 @@ function update_description(){
 }
 
 function update_selected_pn(op){
+  // console.log("update_selected_pn:", op)
   let modal = null
   let select_wrapper = null
   let input_wrapper = null
   let dst_port_wrapper = null
   let new_dst_port_wrapper = null
   switch(op){
-    case "ADD":
+    case __LIGHTEDGE_WEBUI.MODAL.TYPE.ADD:
       modal = ADD_MODAL
       select_wrapper = $("#add_ip_proto_select_wrapper")
       input_wrapper = $("#add_ip_proto_num_wrapper")
@@ -389,7 +419,7 @@ function update_selected_pn(op){
     let value = input.get()
 
     IP_PROTOCOL_SELECT_OPTIONS.some(function(elem){
-      console.log(elem.value, value)
+      // console.log(elem.value, value)
       if ((""+elem.value) === (""+value)){
           // ALLOW PORTS
           enable_ports("ADD", elem.allow_port)

@@ -157,10 +157,23 @@ class WEBUI_Modal extends WEBUI_CoreFunctions{
   }
 
   reset(defaults={}){
+    // console.log("defaults =",defaults)
+    let prefix_length = __LIGHTEDGE_WEBUI.MODAL.PREFIX[this._TYPE].length
     $.each(this._FIELDS, function( key, val ) {
+      // console.log(key,)
+      let def_key = key.substring(prefix_length)
+      // console.log(def_key)
       if (this._is_there(defaults) &&
-          this._is_there(defaults[key])){
-        val.reset(defaults[key])
+          this._is_there(defaults[def_key])){
+        if (this._is_there(defaults[def_key].value)){
+          // console.log("reset key", key,"to", defaults[def_key].value)
+          if (this._is_there(defaults[def_key].options)){
+            val.reset(defaults[def_key].options, defaults[def_key].value)
+          }
+          else{
+            val.reset(defaults[def_key].value)
+          }
+        }
       }
       else{
         val.reset()
@@ -282,7 +295,7 @@ class WEBUI_ModalField_Text extends WEBUI_ModalField{
   }
 
   reset(value){
-    console.log("reset to ", value)
+    // console.log("reset to ", value)
     this.set_value("")
     if (this._is_there(value)){
       this.set_value(value)
@@ -305,7 +318,7 @@ class WEBUI_ModalField_CheckBox extends WEBUI_ModalField{
   }
 
   reset(value=false){
-    console.log("reset to ", value)
+    // console.log("reset to ", value)
     this.set_value(false)
     if (this._is_there(value)){
       this.set_value(value)
@@ -317,7 +330,7 @@ class WEBUI_ModalField_CheckBox extends WEBUI_ModalField{
 class WEBUI_ModalField_Select extends WEBUI_ModalField{
   constructor(field_id){
     super(field_id)
-    console.log("modal_field_SELECT")
+    // console.log("modal_field_SELECT")
   }
 
   set_value(value){
@@ -350,6 +363,9 @@ class WEBUI_ModalField_Select extends WEBUI_ModalField{
     //   }
     //   ...
     // ]
+    if (!this._is_there(descriptor)){
+      descriptor = []
+    }
     this.get_$instance().empty()
     descriptor.forEach(function(item){
       this.add_option(item.label, item.value)
