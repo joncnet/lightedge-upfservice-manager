@@ -10,8 +10,8 @@
  */
 class WEBUI_Request extends WEBUI_CoreFunctions{
 
-  _ENTRY_POINT = 'http://upf-service.default.of.empower:80/upf/v1/'
-  // _ENTRY_POINT = '/upf/v1/'
+  // _ENTRY_POINT = 'http://upf-service.default.of.empower:80/upf/v1/'
+  _ENTRY_POINT = '/upf/v1/'
   _REQ_TIMEOUT_INTERVAL = 2000 //ms
 
   /**

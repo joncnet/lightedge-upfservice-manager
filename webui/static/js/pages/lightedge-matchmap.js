@@ -49,6 +49,8 @@ $(document).ready(function() {
     }
   ]
 
+  set_options_labels()
+
   FIELDS = {
     priority: {
       type: "TEXT",
@@ -96,7 +98,7 @@ $(document).ready(function() {
       value: DEFAULT_DESCRIPTION_VALUE
     },
     ip_proto_select: {
-      options: IP_PROTOCOL_SELECT_OPTIONS,
+      options: set_options_labels(), //IP_PROTOCOL_SELECT_OPTIONS,
       value: DEFAULT_IP_PROTOCOL_SELECT_VALUE
     },
     ip_proto_num: {
@@ -157,6 +159,30 @@ $(document).ready(function() {
 ENTITY = null
 FIELDS = {}
 CF = null
+
+function set_options_labels(){
+  let options = []
+  IP_PROTOCOL_SELECT_OPTIONS.forEach(function(elem, index){
+    let obj = {}
+    console.log("elem", elem)
+    $.each(elem, function(key, item){
+      if (key === "label"){
+        if (item !== "CUSTOM"){
+          obj.label = elem.label + " [" + elem.value + "]"
+        }
+        else{
+          obj.label = item
+        }
+      }
+      else{
+        obj[key] = item
+      }
+    })
+    options.push(obj)
+  })
+  console.log("options:",options)
+  return options
+}
 
 function reset_modal_ip_proto_select_options(modal_type){
   let modal = null
