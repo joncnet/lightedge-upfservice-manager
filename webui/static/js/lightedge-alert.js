@@ -384,7 +384,9 @@ function lightedge_alert_format_content(args){
       // detail = detail +" <pre class='mb-0'>" +
       // // "Check LOG for further details about this error" + "</pre>"
       // " NO responseText (DELETE response?)" + "</pre>"
-      if (this._is_there(args[2])){
+      if (( args[2] != null) && 
+          (args[2] != undefined)){
+      // if (this._is_there()){
         let status = args[2].status
         if (status !== 204){
           detail = detail +" <pre class='mb-0'>" +
