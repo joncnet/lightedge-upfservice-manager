@@ -155,10 +155,13 @@ class UPFManager(EService):
     def matchmap(self):
         """Return matchmap."""
 
+        self.log.debug("Getting matchmaps")
         status, response = self.read_handler("matchmap")
 
         if status != 200:
             raise Exception(response)
+
+        self.log.debug("Response from upf-service is: %s" % response)
 
         fields = ["ip_proto_num", "dst_ip", "dst_port"]
         matchmaplist = list()
@@ -179,6 +182,9 @@ class UPFManager(EService):
                 dst_ip, netmask = dst_ip.split('/')
                 matchmap_dict["dst_ip"] = dst_ip
                 matchmap_dict["netmask"] = int(netmask)
+
+                self.log.debug("Looking for match_index: %s" % match_index)
+                self.log.debug("UPF rules are: %s" % self.upf_chain.rules)
 
                 rule = self.upf_chain.rules[match_index]
                 new_dst = None
@@ -245,6 +251,7 @@ class UPFManager(EService):
         if match.new_dst_port != 0:
             rule.target.to_destination += ":%s" % match.new_dst_port
 
+        self.log.debug("Inserting new rule: %s at index: %s" % (rule, match.index))
         self.upf_chain.insert_rule(rule, match.index)
         self.nat_table.refresh()
 
@@ -254,6 +261,7 @@ class UPFManager(EService):
 
         rule.create_target("ACCEPT")
 
+        self.log.debug("Inserting new rule: %s at index: %s" % (rule, match.index))
         self.upf_chain.insert_rule(rule, match.index)
         self.nat_table.refresh()
 
